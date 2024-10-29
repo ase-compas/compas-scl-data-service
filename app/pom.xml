@@ -1,0 +1,366 @@
+<?xml version="1.0"?>
+<!--
+SPDX-FileCopyrightText: 2021 Alliander N.V.
+
+SPDX-License-Identifier: Apache-2.0
+-->
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.lfenergy.compas.scl.data</groupId>
+        <artifactId>compas-scl-data-service</artifactId>
+        <version>0.15.3-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>app</artifactId>
+    <packaging>jar</packaging>
+
+    <properties>
+        <quarkus.container-image.group>lfenergy</quarkus.container-image.group>
+        <quarkus.container-image.name>compas-scl-data-service</quarkus.container-image.name>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.lfenergy.compas.scl.data</groupId>
+            <artifactId>service</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.lfenergy.compas.scl.data</groupId>
+            <artifactId>repository</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.lfenergy.compas.scl.data</groupId>
+            <artifactId>repository-postgresql</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.lfenergy.compas.core</groupId>
+            <artifactId>commons</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.lfenergy.compas.core</groupId>
+            <artifactId>scl-extension</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.lfenergy.compas.core</groupId>
+            <artifactId>rest-commons</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.lfenergy.compas.core</groupId>
+            <artifactId>websocket-commons</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-arc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-resteasy-reactive</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-resteasy-reactive-jaxb</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-resteasy-reactive-jackson</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-websockets</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-jwt</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-openapi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-health</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-hibernate-validator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-agroal</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-narayana-jta</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-flyway</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-jdbc-postgresql</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.logmanager</groupId>
+            <artifactId>log4j2-jboss-logmanager</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-container-image-docker</artifactId>
+        </dependency>
+
+        <!-- Test Dependencies -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-junit5-mockito</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-test-security-jwt</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-jacoco</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.openpojo</groupId>
+            <artifactId>openpojo</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>io.quarkus</groupId>
+                <artifactId>quarkus-maven-plugin</artifactId>
+                <version>${quarkus.platform.version}</version>
+                <extensions>true</extensions>
+                <executions>
+                    <execution>
+                        <id>build-generic</id>
+                        <goals>
+                            <goal>generate-code</goal>
+                            <goal>generate-code-tests</goal>
+                        </goals>
+                    </execution>
+                    <!-- Put this build execution as last, because we will use this image to do a basic native check (NativeHealthCheckIT).
+                         This information is written in "target\quarkus-artifact.properties" and used by the integration tests (failsafe).
+                      -->
+                    <execution>
+                        <id>build-postgresql</id>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                        <configuration>
+                            <properties>
+                                <quarkus.profile>prod-postgresql</quarkus.profile>
+                                <quarkus.package.output-directory>postgresql-quarkus-app
+                                </quarkus.package.output-directory>
+                                <quarkus.docker.dockerfile-jvm-path>src/main/docker/Dockerfile-postgresql.jvm
+                                </quarkus.docker.dockerfile-jvm-path>
+                                <quarkus.docker.dockerfile-native-path>src/main/docker/Dockerfile-postgresql.native
+                                </quarkus.docker.dockerfile-native-path>
+                                <quarkus.container-image.tag>${project.version}-postgresql</quarkus.container-image.tag>
+                                <quarkus.container-image.additional-tags>latest-postgresql
+                                </quarkus.container-image.additional-tags>
+                            </properties>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>7.8.0</version>
+                <executions>
+                    <execution>
+                        <id>generate-history-api</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/openapi/history-api.yaml</inputSpec>
+                            <generatorName>jaxrs-spec</generatorName>
+                            <output>${project.build.directory}/generated-sources/openapi</output>
+                            <library>quarkus</library>
+                            <apiPackage>org.lfenergy.compas.scl.data.rest.api.scl</apiPackage>
+                            <modelPackage>org.lfenergy.compas.scl.data.rest.api.scl.model</modelPackage>
+                            <generateSupportingFiles>false</generateSupportingFiles>
+                            <configOptions>
+                                <useTags>true</useTags>
+                                <interfaceOnly>true</interfaceOnly>
+                                <dateLibrary>java8</dateLibrary>
+                                <supportAsync>true</supportAsync>
+                                <useMutiny>true</useMutiny>
+                                <useJakartaEe>true</useJakartaEe>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                    <!--                    <execution> note: disabled until archiving API Spec is finished-->
+                    <!--                        <id>generate-archiving-api</id>-->
+                    <!--                        <goals>-->
+                    <!--                            <goal>generate</goal>-->
+                    <!--                        </goals>-->
+                    <!--                        <configuration>-->
+                    <!--                            <inputSpec>${project.basedir}/src/main/openapi/archiving-api.yaml</inputSpec>-->
+                    <!--                            <generatorName>jaxrs-spec</generatorName>-->
+                    <!--                            <output>${project.build.directory}/generated-sources/openapi</output>-->
+                    <!--                            <library>quarkus</library>-->
+                    <!--                            <apiPackage>org.lfenergy.compas.scl.data.rest.api.locations</apiPackage>-->
+                    <!--                            <modelPackage>org.lfenergy.compas.scl.data.rest.api.locations.model</modelPackage>-->
+                    <!--                            <generateSupportingFiles>false</generateSupportingFiles>-->
+                    <!--                            <configOptions>-->
+                    <!--                                <useTags>true</useTags>-->
+                    <!--                                <interfaceOnly>true</interfaceOnly>-->
+                    <!--                                <dateLibrary>java8</dateLibrary>-->
+                    <!--                                <supportAsync>true</supportAsync>-->
+                    <!--                                <useMutiny>true</useMutiny>-->
+                    <!--                                <useJakartaEe>true</useJakartaEe>-->
+                    <!--                            </configOptions>-->
+                    <!--                        </configuration>-->
+                    <!--                    </execution>-->
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/generated-sources/openapi/src/gen/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+                        <maven.home>${maven.home}</maven.home>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>jvm-image</id>
+
+            <properties>
+                <!-- Make a Docker Image, so the integration tests will be executed against the container -->
+                <quarkus.container-image.build>true</quarkus.container-image.build>
+            </properties>
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <version>${surefire-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                                <configuration>
+                                    <systemPropertyVariables>
+                                        <java.util.logging.manager>
+                                            org.jboss.logmanager.LogManager
+                                        </java.util.logging.manager>
+                                        <maven.home>${maven.home}</maven.home>
+                                    </systemPropertyVariables>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>native-image</id>
+            <properties>
+                <!-- Make a Docker Image, so the integration tests will be executed against the container -->
+                <quarkus.container-image.build>true</quarkus.container-image.build>
+
+                <quarkus.package.type>native</quarkus.package.type>
+                <!-- Allows for creating a Linux executable without GraalVM being installed -->
+                <quarkus.native.container-build>true</quarkus.native.container-build>
+            </properties>
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <version>${surefire-plugin.version}</version>
+                        <executions>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>sonar</id>
+            <properties>
+                <sonar.coverage.jacoco.xmlReportPaths>
+                    target/jacoco-report/jacoco.xml,
+                    target/site/jacoco/jacoco.xml,
+                </sonar.coverage.jacoco.xmlReportPaths>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>release</id>
+            <properties>
+                <!-- Make a Docker Image from the component -->
+                <quarkus.container-image.build>true</quarkus.container-image.build>
+
+                <!-- Properties only used for publishing a native docker image (default to Docker Hub) -->
+                <quarkus.container-image.push>true</quarkus.container-image.push>
+            </properties>
+        </profile>
+    </profiles>
+</project>
