@@ -43,7 +43,6 @@ jobs:
           servers: '[{ "id": "github-packages-compas", "username": "OWNER", "password": "${{ secrets.GITHUB_TOKEN }}" }]'
 
       - name: Build with Maven (Pull Request)
-        if: ${{ github.event_name == 'pull_request' }}
         run: ./mvnw -s custom_maven_settings.xml -B -Pnative-image clean verify
 
       - name: Build and push Docker image
