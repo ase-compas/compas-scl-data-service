@@ -29,7 +29,6 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Set up JDK 17
-        if: ${{ steps.release.outputs.release_created }}
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
