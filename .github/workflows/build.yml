@@ -1,4 +1,4 @@
-name: Build Project
+name: Publish Temp Docker Image
 
 on:
   push:
@@ -8,13 +8,12 @@ on:
     branches:
       - 'feature/add_transnet_plugins'
 
-permissions:
-  packages: write
-
 jobs:
   build:
     name: Build
     runs-on: ubuntu-22.04
+    permissions:
+      packages: write
     timeout-minutes: 20
 
     steps:
