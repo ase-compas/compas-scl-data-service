@@ -3,10 +3,10 @@ name: Publish Temp Docker Image
 on:
   push:
     branches:
-      - 'feature/add_transnet_plugins'
+      - 'transnet/develop'
   pull_request:
     branches:
-      - 'feature/add_transnet_plugins'
+      - 'transnet/develop'
 
 jobs:
   build:
