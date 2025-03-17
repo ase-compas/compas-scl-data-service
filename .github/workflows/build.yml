@@ -45,5 +45,5 @@ jobs:
       - name: Build and push Docker image
         id: push
         run: |
-          docker tag lfenergy/compas-scl-data-service:0.15.3-SNAPSHOT-postgresql ghcr.io/ase-compas/lfenergy/compas-scl-data-service:0.15.3-SNAPSHOT-postgresql/${{ env.COMMIT_SHORT_SHA }}
-          docker push ghcr.io/ase-compas/lfenergy/compas-scl-data-service:0.15.3-SNAPSHOT-postgresql/${{ env.COMMIT_SHORT_SHA }}
+          docker tag lfenergy/compas-scl-data-service:0.15.3-SNAPSHOT-postgresql ghcr.io/ase-compas/lfenergy/compas-scl-data-service:0.15.3-SNAPSHOT-postgresql-build-${{ env.COMMIT_SHORT_SHA }}
+          docker push ghcr.io/ase-compas/lfenergy/compas-scl-data-service:0.15.3-SNAPSHOT-postgresql-build-${{ env.COMMIT_SHORT_SHA }}
