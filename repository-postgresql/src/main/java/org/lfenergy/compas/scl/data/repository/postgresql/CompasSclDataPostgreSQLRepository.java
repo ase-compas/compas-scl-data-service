@@ -548,7 +548,7 @@ public class CompasSclDataPostgreSQLRepository implements CompasSclDataRepositor
 
     @Override
     @Transactional(SUPPORTS)
-    public List<IHistoryMetaItem> listHistory(SclFileType type, String name, String author, OffsetDateTime from, OffsetDateTime to) {
+    public List<IHistoryMetaItem> listHistory(SclFileType type, String name, String author, String location, OffsetDateTime from, OffsetDateTime to) {
         StringBuilder sqlBuilder = new StringBuilder("""
             SELECT subquery.id
                  , subquery.major_version
@@ -598,6 +598,11 @@ public class CompasSclDataPostgreSQLRepository implements CompasSclDataRepositor
         if (author != null) {
             sqlBuilder.append(" AND subquery.created_by = ?");
             parameters.add(author);
+        }
+
+        if (location != null) {
+            sqlBuilder.append(" AND subquery.location = ?");
+            parameters.add(location);
         }
 
         if (from != null) {

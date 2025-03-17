@@ -54,11 +54,12 @@ public class HistoryResource implements HistoryApi {
         SclFileType type = dataResourceSearch.getType() != null ? SclFileType.valueOf(dataResourceSearch.getType()) : null;
         String name = dataResourceSearch.getName();
         String author = dataResourceSearch.getAuthor();
+        String location = dataResourceSearch.getLocation();
         OffsetDateTime from = dataResourceSearch.getFrom();
         OffsetDateTime to = dataResourceSearch.getTo();
 
-        if (type != null || name != null || author != null || from != null || to != null) {
-            return compasSclDataService.listHistory(type, name, author, from, to);
+        if (type != null || name != null || author != null || location != null || from != null || to != null) {
+            return compasSclDataService.listHistory(type, name, author, location, from, to);
         }
 
         return compasSclDataService.listHistory();
