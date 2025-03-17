@@ -395,17 +395,17 @@ class CompasSclDataServiceTest {
     void listHistory_WhenCalled_ThenReturnHistoryItemWithLatestVersion() {
         String itemId = UUID.randomUUID().toString();
         IHistoryMetaItem historyItem = new HistoryMetaItem(
-            itemId,
-            "TestItem1",
-            "1.0.1",
-            "IID",
-            "User1",
-            "Coment after update",
-            null,
-            null,
-            false,
-            true,
-            false
+                itemId,
+                "TestItem1",
+                "1.0.1",
+                "IID",
+                "User1",
+                "Coment after update",
+                null,
+                null,
+                false,
+                true,
+                false
         );
         when(compasSclDataRepository.listHistory()).thenReturn(List.of(historyItem));
         List<IHistoryMetaItem> items = compasSclDataService.listHistory();
@@ -418,17 +418,17 @@ class CompasSclDataServiceTest {
     void listHistory_WhenCalledWithId_ThenReturnHistoryItemWithLatestVersion() {
         UUID itemId = UUID.randomUUID();
         IHistoryMetaItem historyItem = new HistoryMetaItem(
-            itemId.toString(),
-            "TestItem1",
-            "1.0.1",
-            "IID",
-            "User1",
-            "Coment after update",
-            null,
-            null,
-            false,
-            true,
-            false
+                itemId.toString(),
+                "TestItem1",
+                "1.0.1",
+                "IID",
+                "User1",
+                "Coment after update",
+                null,
+                null,
+                false,
+                true,
+                false
         );
         when(compasSclDataRepository.listHistory(itemId)).thenReturn(List.of(historyItem));
         List<IHistoryMetaItem> items = compasSclDataService.listHistory(itemId);
@@ -441,23 +441,23 @@ class CompasSclDataServiceTest {
     void listHistory_WhenCalledWithSearchParameters_ThenReturnHistoryItemWithLatestVersion() {
         UUID itemId = UUID.randomUUID();
         IHistoryMetaItem historyItem = new HistoryMetaItem(
-            itemId.toString(),
-            "TestItem1",
-            "1.0.1",
-            "IID",
-            "User1",
-            "Coment after update",
-            null,
-            null,
-            false,
-            true,
-            false
+                itemId.toString(),
+                "TestItem1",
+                "1.0.1",
+                "IID",
+                "User1",
+                "Coment after update",
+                null,
+                null,
+                false,
+                true,
+                false
         );
         SclFileType searchFileType = SclFileType.IID;
-        when(compasSclDataRepository.listHistory(searchFileType, "TestItem1", "User1", null, null)).thenReturn(List.of(historyItem));
-        List<IHistoryMetaItem> items = compasSclDataService.listHistory(searchFileType, "TestItem1", "User1", null, null);
+        when(compasSclDataRepository.listHistory(searchFileType, "TestItem1", "User1", null, null, null)).thenReturn(List.of(historyItem));
+        List<IHistoryMetaItem> items = compasSclDataService.listHistory(searchFileType, "TestItem1", "User1", null, null, null);
 
-        verify(compasSclDataRepository).listHistory(searchFileType, "TestItem1", "User1", null, null);
+        verify(compasSclDataRepository).listHistory(searchFileType, "TestItem1", "User1", null, null, null);
         assertEquals(1, items.size());
     }
 
@@ -465,30 +465,30 @@ class CompasSclDataServiceTest {
     void listHistoryVersionsByUUID_WhenCalledWithId_ThenReturnHistoryItems() {
         UUID itemId = UUID.randomUUID();
         IHistoryMetaItem historyItem = new HistoryMetaItem(
-            itemId.toString(),
-            "TestItem1",
-            "1.0.0",
-            "IID",
-            "User1",
-            null,
-            null,
-            null,
-            false,
-            true,
-            false
+                itemId.toString(),
+                "TestItem1",
+                "1.0.0",
+                "IID",
+                "User1",
+                null,
+                null,
+                null,
+                false,
+                true,
+                false
         );
         IHistoryMetaItem historyItem1 = new HistoryMetaItem(
-            itemId.toString(),
-            "TestItem1",
-            "1.0.1",
-            "IID",
-            "User1",
-            "Coment after update",
-            null,
-            OffsetDateTime.now(),
-            false,
-            true,
-            false
+                itemId.toString(),
+                "TestItem1",
+                "1.0.1",
+                "IID",
+                "User1",
+                "Coment after update",
+                null,
+                OffsetDateTime.now(),
+                false,
+                true,
+                false
         );
         when(compasSclDataRepository.listHistoryVersionsByUUID(itemId)).thenReturn(List.of(historyItem, historyItem1));
         List<IHistoryMetaItem> items = compasSclDataService.listHistoryVersionsByUUID(itemId);
@@ -501,15 +501,15 @@ class CompasSclDataServiceTest {
     void findLocationByUUID_WhenCalledWithId_ThenReturnLocation() {
         UUID locationId = UUID.randomUUID();
         ILocationMetaItem expectedLocation = new LocationMetaItem(
-            locationId.toString(),
-            "locationKey",
-            "locationName",
-            "some description",
-            0
+                locationId.toString(),
+                "locationKey",
+                "locationName",
+                "some description",
+                0
         );
         when(compasSclDataRepository.findLocationByUUID(locationId)).thenReturn(expectedLocation);
 
-        ILocationMetaItem actualLocation =  compasSclDataService.findLocationByUUID(locationId);
+        ILocationMetaItem actualLocation = compasSclDataService.findLocationByUUID(locationId);
 
         verify(compasSclDataRepository).findLocationByUUID(locationId);
         assertEquals(expectedLocation, actualLocation);
@@ -604,19 +604,19 @@ class CompasSclDataServiceTest {
         IHistoryMetaItem historyItem = new HistoryMetaItem(resourceId.toString(), sclDataName, "1.0.0", "IID", "someUser", null, oldLocationItem.getName(), null, true, true, false);
         AbstractItem sclData = new org.lfenergy.compas.scl.data.model.SclMetaInfo(resourceId.toString(), sclDataName, "1.0.0", oldLocationId.toString());
         IAbstractArchivedResourceMetaItem archivedResourceMetaItem = new ArchivedSclResourceMetaItem(
-            archivedResourceId.toString(),
-            sclDataName,
-            "1.0.0",
-            "someUser",
-            null,
-            "IID",
-            null,
-            oldLocationItem.getName(),
-            List.of(new ResourceTagItem(UUID.randomUUID().toString(), "SOURCE_RESOURCE_ID", resourceId.toString())),
-            null,
-            OffsetDateTime.now(),
-            null,
-            null
+                archivedResourceId.toString(),
+                sclDataName,
+                "1.0.0",
+                "someUser",
+                null,
+                "IID",
+                null,
+                oldLocationItem.getName(),
+                List.of(new ResourceTagItem(UUID.randomUUID().toString(), "SOURCE_RESOURCE_ID", resourceId.toString())),
+                null,
+                OffsetDateTime.now(),
+                null,
+                null
         );
         IArchivedResourcesMetaItem archivedResources = new ArchivedResourcesMetaItem(List.of(archivedResourceMetaItem));
 
@@ -625,7 +625,7 @@ class CompasSclDataServiceTest {
         when(compasSclDataRepository.findMetaInfoByUUID(SclFileType.IID, resourceId)).thenReturn(sclData);
         when(compasSclDataRepository.findLocationByUUID(oldLocationId)).thenReturn(oldLocationItem);
         when(compasSclDataRepository.searchArchivedResource("newLocationName", null, null, null, null, null, null, null))
-            .thenReturn(archivedResources);
+                .thenReturn(archivedResources);
 
         compasSclDataService.assignResourceToLocation(newLocationId, resourceId);
 
@@ -642,19 +642,19 @@ class CompasSclDataServiceTest {
 
         ILocationMetaItem assignedLocation = new LocationMetaItem(locationId.toString(), "locationKey", "locationName", null, 1);
         IAbstractArchivedResourceMetaItem archivedResourceMetaItem = new ArchivedSclResourceMetaItem(
-            archivedResourceId.toString(),
-            "sclDataName",
-            "1.0.0",
-            "someUser",
-            null,
-            "IID",
-            null,
-            "locationName",
-            List.of(new ResourceTagItem(UUID.randomUUID().toString(), "SOURCE_RESOURCE_ID", resourceId.toString())),
-            null,
-            OffsetDateTime.now(),
-            null,
-            null
+                archivedResourceId.toString(),
+                "sclDataName",
+                "1.0.0",
+                "someUser",
+                null,
+                "IID",
+                null,
+                "locationName",
+                List.of(new ResourceTagItem(UUID.randomUUID().toString(), "SOURCE_RESOURCE_ID", resourceId.toString())),
+                null,
+                OffsetDateTime.now(),
+                null,
+                null
         );
         IArchivedResourcesMetaItem archivedResources = new ArchivedResourcesMetaItem(List.of(archivedResourceMetaItem));
 
@@ -696,23 +696,23 @@ class CompasSclDataServiceTest {
             file.createNewFile();
 
             when(compasSclDataRepository.archiveResource(resourceId, new Version(version), author, approver, contentType, filename))
-                .thenReturn(
-                    new ArchivedSclResourceMetaItem(
-                        UUID.randomUUID().toString(),
-                        "someName",
-                        version,
-                        author,
-                        approver,
-                        null,
-                        contentType,
-                        "locationName",
-                        List.of(),
-                        null,
-                        OffsetDateTime.now(),
-                        null,
-                        null
-                    )
-                );
+                    .thenReturn(
+                            new ArchivedSclResourceMetaItem(
+                                    UUID.randomUUID().toString(),
+                                    "someName",
+                                    version,
+                                    author,
+                                    approver,
+                                    null,
+                                    contentType,
+                                    "locationName",
+                                    List.of(),
+                                    null,
+                                    OffsetDateTime.now(),
+                                    null,
+                                    null
+                            )
+                    );
 
             compasSclDataService.archiveResource(resourceId, version, author, approver, contentType, filename, file);
 
@@ -736,23 +736,23 @@ class CompasSclDataServiceTest {
         File file = null;
 
         when(compasSclDataRepository.archiveResource(resourceId, new Version(version), author, approver, contentType, filename))
-            .thenReturn(
-                new ArchivedSclResourceMetaItem(
-                    UUID.randomUUID().toString(),
-                    "someName",
-                    version,
-                    author,
-                    approver,
-                    null,
-                    contentType,
-                    "locationName",
-                    List.of(),
-                    null,
-                    OffsetDateTime.now(),
-                    null,
-                    null
-                )
-            );
+                .thenReturn(
+                        new ArchivedSclResourceMetaItem(
+                                UUID.randomUUID().toString(),
+                                "someName",
+                                version,
+                                author,
+                                approver,
+                                null,
+                                contentType,
+                                "locationName",
+                                List.of(),
+                                null,
+                                OffsetDateTime.now(),
+                                null,
+                                null
+                        )
+                );
 
         compasSclDataService.archiveResource(resourceId, version, author, approver, contentType, filename, file);
 
@@ -766,19 +766,19 @@ class CompasSclDataServiceTest {
         String version = "1.0.0";
         String approver = "someOtherUser";
         ArchivedSclResourceMetaItem archivedResource = new ArchivedSclResourceMetaItem(
-            UUID.randomUUID().toString(),
-            "someName",
-            version,
-            "someAuthor",
-            approver,
-            "IID",
-            null,
-            "locationName",
-            List.of(),
-            null,
-            OffsetDateTime.now(),
-            null,
-            null
+                UUID.randomUUID().toString(),
+                "someName",
+                version,
+                "someAuthor",
+                approver,
+                "IID",
+                null,
+                "locationName",
+                List.of(),
+                null,
+                OffsetDateTime.now(),
+                null,
+                null
         );
         String sclData = "someData";
 
@@ -796,21 +796,21 @@ class CompasSclDataServiceTest {
     void getArchivedResourceHistory_whenCalled_ThenResourceHistoryIsReturned() {
         UUID archivedResourceId = UUID.randomUUID();
         IArchivedResourceVersion archivedResourceVersion = new ArchivedResourceVersion(
-            archivedResourceId.toString(),
-            "archivedResourceName",
-            "1.0.0",
-            "someLocation",
-            "some note",
-            "someAuthor",
-            "someApprover",
-            "someType",
-            null,
-            null,
-            List.of(),
-            null,
-            OffsetDateTime.now(),
-            null,
-            true
+                archivedResourceId.toString(),
+                "archivedResourceName",
+                "1.0.0",
+                "someLocation",
+                "some note",
+                "someAuthor",
+                "someApprover",
+                "someType",
+                null,
+                null,
+                List.of(),
+                null,
+                OffsetDateTime.now(),
+                null,
+                true
         );
         IArchivedResourcesHistoryMetaItem archivedResourceHistory = new ArchivedResourcesHistoryMetaItem(List.of(archivedResourceVersion));
 
@@ -826,19 +826,19 @@ class CompasSclDataServiceTest {
     void searchArchivedResources_whenCalled_ThenResourcesAreReturned() {
         UUID archivedResourceId = UUID.randomUUID();
         IAbstractArchivedResourceMetaItem archivedResourceVersion = new ArchivedSclResourceMetaItem(
-            archivedResourceId.toString(),
-            "archivedResourceName",
-            "1.0.0",
-            "someAuthor",
-            "someApprover",
-            "someType",
-            null,
-            "someLocation",
-            List.of(),
-            null,
-            OffsetDateTime.now(),
-            null,
-            null
+                archivedResourceId.toString(),
+                "archivedResourceName",
+                "1.0.0",
+                "someAuthor",
+                "someApprover",
+                "someType",
+                null,
+                "someLocation",
+                List.of(),
+                null,
+                OffsetDateTime.now(),
+                null,
+                null
         );
         IArchivedResourcesMetaItem archivedResources = new ArchivedResourcesMetaItem(List.of(archivedResourceVersion));
         when(compasSclDataRepository.searchArchivedResource(archivedResourceId)).thenReturn(archivedResources);
@@ -854,38 +854,38 @@ class CompasSclDataServiceTest {
         UUID archivedResourceId = UUID.randomUUID();
         UUID archivedResourceId1 = UUID.randomUUID();
         IAbstractArchivedResourceMetaItem archivedResourceVersion = new ArchivedSclResourceMetaItem(
-            archivedResourceId.toString(),
-            "archivedResourceName",
-            "1.0.0",
-            "someAuthor",
-            "someApprover",
-            "someType",
-            null,
-            "someLocation",
-            List.of(),
-            null,
-            OffsetDateTime.now(),
-            null,
-            null
+                archivedResourceId.toString(),
+                "archivedResourceName",
+                "1.0.0",
+                "someAuthor",
+                "someApprover",
+                "someType",
+                null,
+                "someLocation",
+                List.of(),
+                null,
+                OffsetDateTime.now(),
+                null,
+                null
         );
         IAbstractArchivedResourceMetaItem archivedResourceVersion1 = new ArchivedReferencedResourceMetaItem(
-            archivedResourceId1.toString(),
-            "test.pdf",
-            "1.0.0",
-            "someAuthor",
-            "someApprover",
-            "someType",
-            "application/pdf",
-            "someLocation",
-            List.of(),
-            null,
-            OffsetDateTime.now(),
-            null
+                archivedResourceId1.toString(),
+                "test.pdf",
+                "1.0.0",
+                "someAuthor",
+                "someApprover",
+                "someType",
+                "application/pdf",
+                "someLocation",
+                List.of(),
+                null,
+                OffsetDateTime.now(),
+                null
         );
         IArchivedResourcesMetaItem archivedResources1 = new ArchivedResourcesMetaItem(List.of(archivedResourceVersion, archivedResourceVersion1));
 
         when(compasSclDataRepository.searchArchivedResource("someLocation", null, "someApprover", null, null, null, null, null))
-            .thenReturn(archivedResources1);
+                .thenReturn(archivedResources1);
 
         IArchivedResourcesMetaItem actualMetaItem = compasSclDataService.searchArchivedResources("someLocation", null, "someApprover", null, null, null, null, null);
 
@@ -903,24 +903,24 @@ class CompasSclDataServiceTest {
     void searchArchivedResources_whenCalledValidSclFileTypeParameter_ThenResourcesAreReturned() {
         UUID archivedResourceId = UUID.randomUUID();
         IAbstractArchivedResourceMetaItem archivedResourceVersion = new ArchivedSclResourceMetaItem(
-            archivedResourceId.toString(),
-            "archivedResourceName",
-            "1.0.0",
-            "someAuthor",
-            "someApprover",
-            "IID",
-            null,
-            "someLocation",
-            List.of(),
-            null,
-            OffsetDateTime.now(),
-            null,
-            null
+                archivedResourceId.toString(),
+                "archivedResourceName",
+                "1.0.0",
+                "someAuthor",
+                "someApprover",
+                "IID",
+                null,
+                "someLocation",
+                List.of(),
+                null,
+                OffsetDateTime.now(),
+                null,
+                null
         );
         IArchivedResourcesMetaItem archivedResources1 = new ArchivedResourcesMetaItem(List.of(archivedResourceVersion));
 
         when(compasSclDataRepository.searchArchivedResource("someLocation", null, "someApprover", "IID", null, null, null, null))
-            .thenReturn(archivedResources1);
+                .thenReturn(archivedResources1);
 
         IArchivedResourcesMetaItem actualMetaItem = compasSclDataService.searchArchivedResources("someLocation", null, "someApprover", "IID", null, null, null, null);
 

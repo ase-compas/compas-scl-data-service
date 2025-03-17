@@ -148,7 +148,7 @@ public interface CompasSclDataRepository {
      *
      * @return The list of entries found.
      */
-    List<IHistoryMetaItem> listHistory(SclFileType type, String name, String author, OffsetDateTime from, OffsetDateTime to);
+    List<IHistoryMetaItem> listHistory(SclFileType type, String name, String author, String location, OffsetDateTime from, OffsetDateTime to);
 
     /**
      * List all history versions for a specific SCL Entry.
@@ -226,12 +226,12 @@ public interface CompasSclDataRepository {
     /**
      * Archive a resource and link it to the corresponding scl_file entry
      *
-     * @param id The id of the scl_file
-     * @param version The version of the scl_file
-     * @param author The author of the resource
-     * @param approver The approver of the resource
+     * @param id          The id of the scl_file
+     * @param version     The version of the scl_file
+     * @param author      The author of the resource
+     * @param approver    The approver of the resource
      * @param contentType The content type of the resource
-     * @param filename The filename of the resource
+     * @param filename    The filename of the resource
      * @return The created archived resource item
      */
     IAbstractArchivedResourceMetaItem archiveResource(UUID id, Version version, String author, String approver, String contentType, String filename);
@@ -239,8 +239,8 @@ public interface CompasSclDataRepository {
     /**
      * Archive an existing scl resource
      *
-     * @param id The id of the resource to be archived
-     * @param version The version of the resource to be archived
+     * @param id       The id of the resource to be archived
+     * @param version  The version of the resource to be archived
      * @param approver The approver of the archiving action
      * @return The archived resource item
      */
@@ -257,14 +257,14 @@ public interface CompasSclDataRepository {
     /**
      * Retrieve all archived entries according to the search parameters
      *
-     * @param location The location of the archived resource
-     * @param name The name of the archived resource
-     * @param approver The approver of the archived resource
+     * @param location    The location of the archived resource
+     * @param name        The name of the archived resource
+     * @param approver    The approver of the archived resource
      * @param contentType The content type of the resource
-     * @param type The type of the resource
-     * @param voltage The voltage of the resource
-     * @param from The start timestamp of archiving (including)
-     * @param to The end timestamp of archiving (including)
+     * @param type        The type of the resource
+     * @param voltage     The voltage of the resource
+     * @param from        The start timestamp of archiving (including)
+     * @param to          The end timestamp of archiving (including)
      * @return All archived entries matching the search criteria
      */
     IArchivedResourcesMetaItem searchArchivedResource(String location, String name, String approver, String contentType, String type, String voltage, OffsetDateTime from, OffsetDateTime to);

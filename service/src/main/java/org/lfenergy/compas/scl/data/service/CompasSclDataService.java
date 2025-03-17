@@ -456,8 +456,8 @@ public class CompasSclDataService {
      * @return The List of Items found.
      */
     @Transactional(SUPPORTS)
-    public List<IHistoryMetaItem> listHistory(SclFileType type, String name, String author, OffsetDateTime from, OffsetDateTime to) {
-        return repository.listHistory(type, name, author, from, to);
+    public List<IHistoryMetaItem> listHistory(SclFileType type, String name, String author, String location, OffsetDateTime from, OffsetDateTime to) {
+        return repository.listHistory(type, name, author, location, from, to);
     }
 
     /**
@@ -484,7 +484,7 @@ public class CompasSclDataService {
     /**
      * List all Locations
      *
-     * @param page The current page number to be displayed
+     * @param page     The current page number to be displayed
      * @param pageSize The amount of entries per page
      * @return All Location entries in a paginated list
      */
@@ -496,8 +496,8 @@ public class CompasSclDataService {
     /**
      * Create a Location entry according to the supplied parameters
      *
-     * @param key The key value of the Location entry
-     * @param name The name value of the Location entry
+     * @param key         The key value of the Location entry
+     * @param name        The name value of the Location entry
      * @param description The description value of the Location entry
      * @return The created Location entry
      */
@@ -520,7 +520,7 @@ public class CompasSclDataService {
         int assignedResourceCount = locationToDelete.getAssignedResources();
         if (assignedResourceCount > 0) {
             throw new CompasSclDataServiceException(LOCATION_DELETION_NOT_ALLOWED_ERROR_CODE,
-                String.format("Deletion of Location %s not allowed, unassign resources before deletion", id));
+                    String.format("Deletion of Location %s not allowed, unassign resources before deletion", id));
         }
 
         repository.deleteLocationTags(locationToDelete);
@@ -531,9 +531,9 @@ public class CompasSclDataService {
     /**
      * Update a Location entry with the supplied parameter value
      *
-     * @param id The id of the Location to be updated
-     * @param key The updated key of the Location entry
-     * @param name The updated name of the Location entry
+     * @param id          The id of the Location to be updated
+     * @param key         The updated key of the Location entry
+     * @param name        The updated name of the Location entry
      * @param description The updated description of the Location entry
      * @return The updated Location entry
      */
@@ -574,14 +574,14 @@ public class CompasSclDataService {
 
     private List<String> getResourceIdsFromAssignedArchivedResources(UUID resourceId, ILocationMetaItem location) {
         return repository.searchArchivedResource(location.getName(), null, null, null, null, null, null, null)
-            .getResources()
-            .stream()
-            .filter(ar ->
-                ar.getFields()
-                    .stream()
-                    .anyMatch(f ->
-                        f.getKey().equals("SOURCE_RESOURCE_ID") && f.getValue().equals(resourceId.toString())))
-            .map(IAbstractItem::getId).toList();
+                .getResources()
+                .stream()
+                .filter(ar ->
+                        ar.getFields()
+                                .stream()
+                                .anyMatch(f ->
+                                        f.getKey().equals("SOURCE_RESOURCE_ID") && f.getValue().equals(resourceId.toString())))
+                .map(IAbstractItem::getId).toList();
     }
 
     /**
@@ -603,13 +603,13 @@ public class CompasSclDataService {
     /**
      * Archive a resource and link it to the corresponding scl_file entry
      *
-     * @param id The id of the scl_file
-     * @param version The version of the scl_file
-     * @param author The author of the resource
-     * @param approver The approver of the resource
+     * @param id          The id of the scl_file
+     * @param version     The version of the scl_file
+     * @param author      The author of the resource
+     * @param approver    The approver of the resource
      * @param contentType The content type of the resource
-     * @param filename The filename of the resource
-     * @param body The content of the resource
+     * @param filename    The filename of the resource
+     * @param body        The content of the resource
      * @return The created archived resource item
      */
     @Transactional(REQUIRED)
@@ -624,8 +624,8 @@ public class CompasSclDataService {
     /**
      * Archive an existing scl resource
      *
-     * @param id The id of the resource to be archived
-     * @param version The version of the resource to be archived
+     * @param id       The id of the resource to be archived
+     * @param version  The version of the resource to be archived
      * @param approver The approver of the archiving action
      * @return The archived resource item
      */
@@ -664,14 +664,14 @@ public class CompasSclDataService {
     /**
      * Retrieve all archived entries according to the search parameters
      *
-     * @param location The location of the archived resource
-     * @param name The name of the archived resource
-     * @param approver The approver of the archived resource
+     * @param location    The location of the archived resource
+     * @param name        The name of the archived resource
+     * @param approver    The approver of the archived resource
      * @param contentType The content type of the resource
-     * @param type The type of the resource
-     * @param voltage The voltage of the resource
-     * @param from The start timestamp of archiving (including)
-     * @param to The end timestamp of archiving (including)
+     * @param type        The type of the resource
+     * @param voltage     The voltage of the resource
+     * @param from        The start timestamp of archiving (including)
+     * @param to          The end timestamp of archiving (including)
      * @return All archived entries matching the search criteria
      */
     @Transactional(SUPPORTS)
@@ -682,12 +682,12 @@ public class CompasSclDataService {
     private String getSclFileType(String contentType) {
         if (contentType != null && !contentType.isBlank()) {
             boolean isInvalidSclType = Arrays.stream(SclFileType.values())
-                .noneMatch(sclFileType ->
-                    sclFileType.name().equalsIgnoreCase(contentType)
-                );
+                    .noneMatch(sclFileType ->
+                            sclFileType.name().equalsIgnoreCase(contentType)
+                    );
             if (isInvalidSclType) {
                 throw new CompasSclDataServiceException(INVALID_SCL_CONTENT_TYPE_ERROR_CODE,
-                    "Content type " + contentType + " is no valid SCL file type");
+                        "Content type " + contentType + " is no valid SCL file type");
             }
             return SclFileType.valueOf(contentType.toUpperCase()).name();
         }
