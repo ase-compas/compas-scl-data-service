@@ -466,10 +466,10 @@ class CompasSclDataServiceTest {
             false
         );
         SclFileType searchFileType = SclFileType.IID;
-        when(compasSclDataRepository.listHistory(searchFileType, "TestItem1", "User1", null, null)).thenReturn(List.of(historyItem));
-        List<IHistoryMetaItem> items = compasSclDataService.listHistory(searchFileType, "TestItem1", "User1", null, null);
+        when(compasSclDataRepository.listHistory(searchFileType, "TestItem1", "User1", null, null, null)).thenReturn(List.of(historyItem));
+        List<IHistoryMetaItem> items = compasSclDataService.listHistory(searchFileType, "TestItem1", "User1", null, null, null);
 
-        verify(compasSclDataRepository).listHistory(searchFileType, "TestItem1", "User1", null, null);
+        verify(compasSclDataRepository).listHistory(searchFileType, "TestItem1", "User1", null, null, null);
         assertEquals(1, items.size());
     }
 

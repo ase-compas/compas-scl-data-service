@@ -148,7 +148,7 @@ public interface CompasSclDataRepository {
      *
      * @return The list of entries found.
      */
-    List<IHistoryMetaItem> listHistory(SclFileType type, String name, String author, OffsetDateTime from, OffsetDateTime to);
+    List<IHistoryMetaItem> listHistory(SclFileType type, String name, String author, String location, OffsetDateTime from, OffsetDateTime to);
 
     /**
      * List all history versions for a specific SCL Entry.

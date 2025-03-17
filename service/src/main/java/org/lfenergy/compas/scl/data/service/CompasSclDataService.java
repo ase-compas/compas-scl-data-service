@@ -479,8 +479,8 @@ public class CompasSclDataService {
      * @return The List of Items found.
      */
     @Transactional(SUPPORTS)
-    public List<IHistoryMetaItem> listHistory(SclFileType type, String name, String author, OffsetDateTime from, OffsetDateTime to) {
-        return repository.listHistory(type, name, author, from, to);
+    public List<IHistoryMetaItem> listHistory(SclFileType type, String name, String author, String location, OffsetDateTime from, OffsetDateTime to) {
+        return repository.listHistory(type, name, author, location, from, to);
     }
 
     /**
