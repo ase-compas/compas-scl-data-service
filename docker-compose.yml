@@ -32,7 +32,7 @@ services:
     depends_on:
       - postgres
     ports:
-      - "9090:9090"
+      - "8080:8080"
     environment:
       POSTGRESQL_HOST: postgres
       POSTGRESQL_PORT: 5432
