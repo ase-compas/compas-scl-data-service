@@ -1,5 +1,6 @@
 package org.lfenergy.compas.scl.data.service;
 
+import io.quarkus.arc.lookup.LookupUnlessProperty;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -14,6 +15,7 @@ import java.io.*;
 import java.util.List;
 import java.util.UUID;
 
+@LookupUnlessProperty(name = "scl-data-service.archiving.elo-connector.enabled", stringValue = "true")
 @ApplicationScoped
 public class CompasSclDataArchivingServiceImpl implements ICompasSclDataArchivingService {
 
@@ -38,11 +40,13 @@ public class CompasSclDataArchivingServiceImpl implements ICompasSclDataArchivin
     @Override
     public Uni<ResourceMetaData> archiveData(String locationKey, String filename, UUID resourceId, File body, IAbstractArchivedResourceMetaItem archivedResource) {
         String absolutePath = generateSclDataLocation(resourceId, archivedResource, locationKey) + File.separator + "referenced_resources";
-        File locationDir = new File(absolutePath);
-        locationDir.mkdirs();
+        File archivedResourceDir = new File(absolutePath);
+        if (!archivedResourceDir.exists()) {
+            archivedResourceDir.mkdirs();
+        }
         File f = new File(absolutePath + File.separator + filename);
         if (f.exists() && !f.isDirectory()) {
-            return Uni.createFrom().failure(new RuntimeException("File '"+filename+"' already exists"));
+            return Uni.createFrom().failure(new RuntimeException("File '" + filename + "' already exists"));
         }
         try (FileOutputStream fos = new FileOutputStream(f)) {
             try (FileInputStream fis = new FileInputStream(body)) {
@@ -58,9 +62,11 @@ public class CompasSclDataArchivingServiceImpl implements ICompasSclDataArchivin
     @Override
     public Uni<ResourceMetaData> archiveSclData(UUID resourceId, IAbstractArchivedResourceMetaItem archivedResource, String locationKey, String data) {
         String absolutePath = generateSclDataLocation(resourceId, archivedResource, locationKey);
-        File locationDir = new File(absolutePath);
-        locationDir.mkdirs();
-        File f = new File(locationDir + File.separator + archivedResource.getName() + "." + archivedResource.getType().toLowerCase());
+        File archivedResourceDir = new File(absolutePath);
+        if (!archivedResourceDir.exists()) {
+            archivedResourceDir.mkdirs();
+        }
+        File f = new File(archivedResourceDir + File.separator + archivedResource.getName() + "." + archivedResource.getType().toLowerCase());
         try (FileWriter fw = new FileWriter(f)) {
             fw.write(data);
         } catch (IOException e) {

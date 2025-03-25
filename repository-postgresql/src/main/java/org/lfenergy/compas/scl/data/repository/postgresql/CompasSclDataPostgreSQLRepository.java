@@ -1360,9 +1360,6 @@ public class CompasSclDataPostgreSQLRepository implements CompasSclDataRepositor
             parameters.add(type);
             sb.append(" AND (rr.type = ? OR sf.type = ?)");
         }
-        if (voltage != null && !voltage.isBlank()) {
-//            ToDo cgutmann: find out how to retrieve voltage
-        }
         if (from != null) {
             parameters.add(from);
             sb.append(" AND ar.archived_at >= ?");

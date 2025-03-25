@@ -5,15 +5,14 @@ package org.lfenergy.compas.scl.data.service;
 
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.unchecked.Unchecked;
-import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import jakarta.transaction.SystemException;
 import jakarta.transaction.TransactionManager;
 import jakarta.transaction.Transactional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.lfenergy.compas.core.commons.ElementConverter;
 import org.lfenergy.compas.core.commons.exception.CompasException;
 import org.lfenergy.compas.scl.data.dto.LocationMetaData;
@@ -50,40 +49,22 @@ import static org.lfenergy.compas.scl.extensions.commons.CompasExtensionsConstan
 @ApplicationScoped
 public class CompasSclDataService {
 
+    private static final Logger LOGGER = LogManager.getLogger(CompasSclDataService.class);
     private final CompasSclDataRepository repository;
     private final ElementConverter converter;
     private final SclElementProcessor sclElementProcessor;
-    private ICompasSclDataArchivingService archivingService;
-    private static final Logger LOGGER = LogManager.getLogger(CompasSclDataService.class);
-    @ConfigProperty(name = "scl-data-service.archiving.connector.enabled", defaultValue = "false")
-    String isEloEnabled;
-
-    @Inject
-    CompasSclDataArchivingServiceImpl fileSystemArchivingService;
-
-    @Inject
-    CompasSclDataArchivingEloServiceImpl eloArchivingService;
-
-    @Inject
-    TransactionManager tm;
+    private final Instance<ICompasSclDataArchivingService> archivingService;
+    private final TransactionManager tm;
 
     @Inject
     public CompasSclDataService(CompasSclDataRepository repository, ElementConverter converter,
-                                SclElementProcessor sclElementProcessor) {
+                                SclElementProcessor sclElementProcessor,
+                                Instance<ICompasSclDataArchivingService> archivingService, TransactionManager tm) {
         this.repository = repository;
         this.converter = converter;
         this.sclElementProcessor = sclElementProcessor;
-    }
-
-    @PostConstruct
-    void init() {
-        if (isEloEnabled.equalsIgnoreCase("true")) {
-            LOGGER.info("Initializing ELO archiving service");
-            this.archivingService = eloArchivingService;
-        } else {
-            LOGGER.info("Initializing FileSystem archiving service");
-            this.archivingService = fileSystemArchivingService;
-        }
+        this.archivingService = archivingService;
+        this.tm = tm;
     }
 
     /**
@@ -645,7 +626,7 @@ public class CompasSclDataService {
                         createLocationInArchive(location)
                             .onItem()
                             .call(createdLocation ->
-                                storeResourceDataInArchive(archivingService.archiveData(
+                                storeResourceDataInArchive(archivingService.get().archiveData(
                                     location.getKey(),
                                     filename,
                                     id,
@@ -657,7 +638,7 @@ public class CompasSclDataService {
     }
 
     private Uni<LocationMetaData> createLocationInArchive(ILocationMetaItem location) {
-        return archivingService.createLocation(location)
+        return archivingService.get().createLocation(location)
             .onFailure()
             .invoke(Unchecked.consumer(throwable -> {
                 LOGGER.warn("Error while creating location: {}", throwable.getMessage());
@@ -705,7 +686,7 @@ public class CompasSclDataService {
                         createLocationInArchive(location)
                             .onItem()
                             .call(createdLocation ->
-                                storeResourceDataInArchive(archivingService.archiveSclData(
+                                storeResourceDataInArchive(archivingService.get().archiveSclData(
                                     id,
                                     archivedSclResource,
                                     location.getKey(),

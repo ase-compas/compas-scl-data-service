@@ -35,7 +35,7 @@ public class LocationsResource implements LocationsApi {
     public Uni<Void> assignResourceToLocation(UUID locationId, UUID uuid) {
         LOGGER.info("Assigning resource '{}' to location '{}'", uuid, locationId);
         compasSclDataService.assignResourceToLocation(locationId, uuid);
-        return Uni.createFrom().nullItem();
+        return Uni.createFrom().voidItem();
     }
 
     @Override
@@ -55,7 +55,7 @@ public class LocationsResource implements LocationsApi {
     public Uni<Void> deleteLocation(UUID locationId) {
         LOGGER.info("Deleting location with ID '{}'", locationId);
         compasSclDataService.deleteLocation(locationId);
-        return Uni.createFrom().nullItem();
+        return Uni.createFrom().voidItem();
     }
 
     @Override
@@ -83,7 +83,7 @@ public class LocationsResource implements LocationsApi {
     public Uni<Void> unassignResourceFromLocation(UUID locationId, UUID uuid) {
         LOGGER.info("Unassigning resource '{}' from location '{}'", uuid, locationId);
         compasSclDataService.unassignResourceFromLocation(locationId, uuid);
-        return Uni.createFrom().nullItem();
+        return Uni.createFrom().voidItem();
     }
 
     @Override

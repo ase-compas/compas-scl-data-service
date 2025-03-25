@@ -2,11 +2,13 @@ package org.lfenergy.compas.scl.data.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.quarkus.arc.lookup.LookupIfProperty;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import io.smallrye.mutiny.unchecked.Unchecked;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.ws.rs.core.MediaType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,15 +27,19 @@ import java.util.UUID;
 
 import static org.lfenergy.compas.scl.data.exception.CompasSclDataServiceErrorCode.CREATION_ERROR_CODE;
 
+@LookupIfProperty(name = "scl-data-service.archiving.elo-connector.enabled", stringValue = "true")
 @ApplicationScoped
+@Named("EloArchiveService")
 public class CompasSclDataArchivingEloServiceImpl implements ICompasSclDataArchivingService {
 
     private static final Logger LOGGER = LogManager.getLogger(CompasSclDataArchivingEloServiceImpl.class);
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final IEloConnectorRestClient eloClient;
 
     @Inject
-    @RestClient
-    IEloConnectorRestClient eloClient;
+    public CompasSclDataArchivingEloServiceImpl(@RestClient IEloConnectorRestClient eloClient) {
+        this.eloClient = eloClient;
+    }
 
     @Override
     public Uni<LocationMetaData> createLocation(ILocationMetaItem location) {

@@ -8,6 +8,8 @@ package org.lfenergy.compas.scl.data.service;
 
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
+import jakarta.enterprise.inject.Instance;
+import jakarta.transaction.TransactionManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,7 +31,6 @@ import org.w3c.dom.Element;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -50,10 +51,13 @@ class CompasSclDataServiceTest {
     private CompasSclDataRepository compasSclDataRepository;
 
     @Mock
-    private ICompasSclDataArchivingService compasSclDataArchivingService;
+    private Instance<ICompasSclDataArchivingService> compasSclDataArchivingService;
 
     @Mock
-    private CompasSclDataArchivingServiceImpl compasSclDataArchivingServiceImpl;
+    private CompasSclDataArchivingServiceImpl archivingServiceImpl;
+
+    @Mock
+    private TransactionManager transactionManager;
 
     private CompasSclDataService compasSclDataService;
 
@@ -61,11 +65,9 @@ class CompasSclDataServiceTest {
     private final SclElementProcessor processor = new SclElementProcessor();
 
     @BeforeEach
-    void beforeEach() throws NoSuchFieldException, IllegalAccessException {
-        compasSclDataService = new CompasSclDataService(compasSclDataRepository, converter, processor);
-        Field archivingServiceField = compasSclDataService.getClass().getDeclaredField("archivingService");
-        archivingServiceField.setAccessible(true);
-        archivingServiceField.set(compasSclDataService, compasSclDataArchivingServiceImpl);
+    void beforeEach() {
+        compasSclDataService = new CompasSclDataService(compasSclDataRepository, converter, processor,
+            compasSclDataArchivingService, transactionManager);
     }
 
     @Test
@@ -757,7 +759,8 @@ class CompasSclDataServiceTest {
                 .thenReturn(
                     locationMetaItem
                 );
-            when(compasSclDataArchivingServiceImpl.createLocation(locationMetaItem))
+            when(compasSclDataArchivingService.get()).thenReturn(archivingServiceImpl);
+            when(archivingServiceImpl.createLocation(locationMetaItem))
                 .thenReturn(Uni.createFrom()
                     .item(new LocationMetaData()
                         .uuid(locationId)
@@ -766,7 +769,7 @@ class CompasSclDataServiceTest {
                         .description(null)
                         .assignedResources(1)
                 ));
-            when(compasSclDataArchivingServiceImpl.archiveData(any(), any(), any(), any(), any())).thenReturn(Uni.createFrom().item(
+            when(archivingServiceImpl.archiveData(any(), any(), any(), any(), any())).thenReturn(Uni.createFrom().item(
                 new ResourceMetaData(
                     TypeEnum.RESOURCE,
                     UUID.randomUUID(),
@@ -838,7 +841,8 @@ class CompasSclDataServiceTest {
                     null
                 )
             );
-        when(compasSclDataArchivingServiceImpl.archiveData(any(), any(), any(), any(), any())).thenReturn(Uni.createFrom().item(
+        when(compasSclDataArchivingService.get()).thenReturn(archivingServiceImpl);
+        when(archivingServiceImpl.archiveData(any(), any(), any(), any(), any())).thenReturn(Uni.createFrom().item(
             new ResourceMetaData(
                 TypeEnum.RESOURCE,
                 UUID.randomUUID(),
@@ -846,7 +850,7 @@ class CompasSclDataServiceTest {
                 List.of()
             )
         ));
-        when(compasSclDataArchivingServiceImpl.createLocation(locationMetaItem))
+        when(archivingServiceImpl.createLocation(locationMetaItem))
             .thenReturn(Uni.createFrom()
                 .item(new LocationMetaData()
                     .uuid(locationId)
@@ -855,12 +859,11 @@ class CompasSclDataServiceTest {
                     .description("someDescription")
                     .assignedResources(1)
                 ));
-
         UniAssertSubscriber<IAbstractArchivedResourceMetaItem> cut = compasSclDataService.archiveResource(resourceId, version, author, approver, contentType, filename, null).subscribe().withSubscriber(UniAssertSubscriber.create());
 
         cut.assertCompleted();
         verify(compasSclDataRepository, times(1)).archiveResource(resourceId, new Version(version), author, approver, contentType, filename);
-        verify(compasSclDataArchivingService, times(0)).archiveSclData(any(), any(), any(), any());
+        verify(archivingServiceImpl, times(0)).archiveSclData(any(), any(), any(), any());
     }
 
     @Test
@@ -898,7 +901,8 @@ class CompasSclDataServiceTest {
         when(compasSclDataRepository.findLocationByUUID(locationId)).thenReturn(
             locationMetaItem
         );
-        when(compasSclDataArchivingServiceImpl.archiveSclData(any(), any(), any(), any())).thenReturn(Uni.createFrom().item(
+        when(compasSclDataArchivingService.get()).thenReturn(archivingServiceImpl);
+        when(archivingServiceImpl.archiveSclData(any(), any(), any(), any())).thenReturn(Uni.createFrom().item(
             new ResourceMetaData(
                 TypeEnum.RESOURCE,
                 UUID.randomUUID(),
@@ -906,7 +910,7 @@ class CompasSclDataServiceTest {
                 List.of()
             )
         ));
-        when(compasSclDataArchivingServiceImpl.createLocation(locationMetaItem))
+        when(archivingServiceImpl.createLocation(locationMetaItem))
             .thenReturn(Uni.createFrom()
                 .item(new LocationMetaData()
                     .uuid(locationId)
@@ -921,7 +925,7 @@ class CompasSclDataServiceTest {
         result.assertCompleted();
         verify(compasSclDataRepository, times(1)).archiveSclResource(resourceId, new Version(version), approver);
         verify(compasSclDataRepository, times(1)).findByUUID(resourceId, new Version(version));
-        verify(compasSclDataArchivingServiceImpl, times(1)).archiveSclData(resourceId, archivedResource, "locationKey", sclData);
+        verify(archivingServiceImpl, times(1)).archiveSclData(resourceId, archivedResource, "locationKey", sclData);
     }
 
     @Test
