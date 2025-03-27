@@ -76,7 +76,7 @@ public class ArchiveResource implements ArchivingApi {
         if (uuid != null && !uuid.isBlank()) {
             return compasSclDataService.searchArchivedResources(UUID.fromString(uuid));
         }
-        String location = archivedResourcesSearch.getLocation();
+        String locationId = archivedResourcesSearch.getLocation();
         String name = archivedResourcesSearch.getName();
         String approver = archivedResourcesSearch.getApprover();
         String contentType = archivedResourcesSearch.getContentType();
@@ -84,7 +84,7 @@ public class ArchiveResource implements ArchivingApi {
         String voltage = archivedResourcesSearch.getVoltage();
         OffsetDateTime from = archivedResourcesSearch.getFrom();
         OffsetDateTime to = archivedResourcesSearch.getTo();
-        return compasSclDataService.searchArchivedResources(location, name, approver, contentType, type, voltage, from, to);
+        return compasSclDataService.searchArchivedResources(locationId, name, approver, contentType, type, voltage, from, to);
     }
 
     private ArchivedResource mapToArchivedResource(IAbstractArchivedResourceMetaItem archivedResource) {
