@@ -24,7 +24,7 @@ public class CompasSclDataArchivingServiceImpl implements ICompasSclDataArchivin
 
     @Override
     public Uni<LocationMetaData> createLocation(ILocationMetaItem location) {
-        File newLocationDirectory = new File(locationPath + File.separator + location.getName());
+        File newLocationDirectory = new File(locationPath + File.separator + location.getKey());
         if (!newLocationDirectory.exists()) {
             newLocationDirectory.mkdirs();
         }
