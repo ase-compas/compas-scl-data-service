@@ -590,7 +590,7 @@ public class CompasSclDataPostgreSQLRepository implements CompasSclDataRepositor
             parameters.add(type.toString());
         }
 
-        if (name != null) {
+        if (name != null && !name.isBlank()) {
             sqlBuilder.append(" AND subquery.name ILIKE ?");
             parameters.add("%" + name + "%");
         }
