@@ -1,3 +1,8 @@
+/**
+ * SPDX-FileCopyrightText: 2025 BearingPoint GmbH
+ *
+ * SPDX-License-Identifier: Apache-2.0
+*/
 DELETE
 FROM scl_file;
 

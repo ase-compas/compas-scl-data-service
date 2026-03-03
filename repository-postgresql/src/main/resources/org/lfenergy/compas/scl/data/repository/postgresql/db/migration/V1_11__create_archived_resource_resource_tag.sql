@@ -1,3 +1,8 @@
+/**
+ * SPDX-FileCopyrightText: 2024 BearingPoint GmbH
+ *
+ * SPDX-License-Identifier: Apache-2.0
+*/
 --
 -- Creating many-to-many reference table to hold references to Archived Resource Data and Resource Tag Data.
 --

@@ -1282,7 +1282,7 @@ public class CompasSclDataPostgreSQLRepository implements CompasSclDataRepositor
     }
 
     @Override
-    public IArchivedResourcesMetaItem searchArchivedResource(String locationId, String name, String author,String approver,String contentType, String type, String voltage, OffsetDateTime from, OffsetDateTime to) {
+    public IArchivedResourcesMetaItem searchArchivedResource(String locationId, String name, String author, String approver, String contentType, String type, String voltage, OffsetDateTime from, OffsetDateTime to) {
         List<Object> parameters = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
         sb.append("""

@@ -476,6 +476,33 @@ class CompasSclDataServiceTest {
     }
 
     @Test
+    void listHistory_WhenCalledWithAuthorAndNoMatchingResults_ThenReturnsEmptyList() {
+        SclFileType searchFileType = SclFileType.SCD;
+
+        when(compasSclDataRepository.listHistory(searchFileType, null, "NonExistentAuthor", null, null, null))
+            .thenReturn(emptyList());
+
+        List<IHistoryMetaItem> items = compasSclDataService.listHistory(searchFileType, null, "NonExistentAuthor", null, null, null);
+
+        verify(compasSclDataRepository).listHistory(searchFileType, null, "NonExistentAuthor", null, null, null);
+        assertTrue(items.isEmpty());
+    }
+
+    @Test
+    void listHistory_WhenCalledWithAuthorAndLocationAndNoMatchingResults_ThenReturnsEmptyList() {
+        SclFileType searchFileType = SclFileType.SCD;
+        String location = UUID.randomUUID().toString();
+
+        when(compasSclDataRepository.listHistory(searchFileType, null, "John", location, null, null))
+            .thenReturn(emptyList());
+
+        List<IHistoryMetaItem> items = compasSclDataService.listHistory(searchFileType, null, "John", location, null, null);
+
+        verify(compasSclDataRepository).listHistory(searchFileType, null, "John", location, null, null);
+        assertTrue(items.isEmpty());
+    }
+
+    @Test
     void listHistoryVersionsByUUID_WhenCalledWithId_ThenReturnHistoryItems() {
         UUID itemId = UUID.randomUUID();
         IHistoryMetaItem historyItem = new HistoryMetaItem(
@@ -1091,6 +1118,40 @@ class CompasSclDataServiceTest {
 
         assertFalse(actualMetaItem.getResources().isEmpty());
         verify(compasSclDataRepository, times(1)).searchArchivedResource(null, null, "John",null, null, null, null, null, null);
+    }
+
+    @Test
+    void searchArchivedResources_whenCalledWithAuthorAndNoMatchingResults_ThenReturnsEmptyList() {
+        IArchivedResourcesMetaItem emptyResult = new ArchivedResourcesMetaItem(emptyList());
+
+        when(compasSclDataRepository.searchArchivedResource(null, null, "NonExistentAuthor", null, null, null, null, null, null))
+            .thenReturn(emptyResult);
+
+        IArchivedResourcesMetaItem actualMetaItem = compasSclDataService.searchArchivedResources(null, null, "NonExistentAuthor", null, null, null, null, null, null);
+
+        assertTrue(actualMetaItem.getResources().isEmpty());
+        verify(compasSclDataRepository, times(1)).searchArchivedResource(null, null, "NonExistentAuthor", null, null, null, null, null, null);
+    }
+
+    @Test
+    void searchArchivedResources_whenCalledWithAuthorAndInvalidContentType_ThenThrowsExceptionAndRepositoryIsNotCalled() {
+        assertThrows(CompasSclDataServiceException.class,
+            () -> compasSclDataService.searchArchivedResources(null, null, "John", null, "INVALID_TYPE", null, null, null, null));
+
+        verify(compasSclDataRepository, never()).searchArchivedResource(any(), any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void searchArchivedResources_whenCalledWithAuthorAndApproverAndNoMatchingResults_ThenReturnsEmptyList() {
+        IArchivedResourcesMetaItem emptyResult = new ArchivedResourcesMetaItem(emptyList());
+
+        when(compasSclDataRepository.searchArchivedResource(null, null, "John", "NonExistentApprover", null, null, null, null, null))
+            .thenReturn(emptyResult);
+
+        IArchivedResourcesMetaItem actualMetaItem = compasSclDataService.searchArchivedResources(null, null, "John", "NonExistentApprover", null, null, null, null, null);
+
+        assertTrue(actualMetaItem.getResources().isEmpty());
+        verify(compasSclDataRepository, times(1)).searchArchivedResource(null, null, "John", "NonExistentApprover", null, null, null, null, null);
     }
 
     private Element createLabelElement(String validLabel) {

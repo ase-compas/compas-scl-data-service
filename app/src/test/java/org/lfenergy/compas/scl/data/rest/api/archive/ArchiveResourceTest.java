@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 BearingPoint GmbH
+//
+// SPDX-License-Identifier: Apache-2.0
 package org.lfenergy.compas.scl.data.rest.api.archive;
 
 import io.quarkus.test.InjectMock;
@@ -22,9 +25,10 @@ import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @QuarkusTest
 @TestHTTPEndpoint(ArchiveResource.class)
@@ -165,6 +169,168 @@ class ArchiveResourceTest {
         assertEquals(author2, result.getResources().get(1).getAuthor());
     }
 
+    @Test
+    void searchArchivedResources_WhenCalledWithNonExistingAuthor_ThenReturnsEmptyList() {
+        IArchivedResourcesMetaItem archivedResources = new ArchivedResourcesMetaItem(List.of());
+
+        when(compasSclDataService.searchArchivedResources(null, null, "John",null,null,null,null,null, null))
+                .thenReturn(archivedResources);
+        Response response = given()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("{\"author\": \"John\"}")
+                .when().post("/resources/search")
+                .then()
+                .statusCode(200)
+                .extract()
+                .response();
+
+        ArchivedResources result = response.as(ArchivedResources.class);
+        assertTrue(result.getResources().isEmpty());
+    }
+
+    @Test
+    void searchArchivedResources_WhenCalledWithBlankSpaceAuthorField_ThenReturnsEmptyList() {
+        IArchivedResourcesMetaItem archivedResources = new ArchivedResourcesMetaItem(List.of());
+
+        when(compasSclDataService.searchArchivedResources(null, null, "",null,null,null,null,null, null))
+                .thenReturn(archivedResources);
+        Response response = given()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("{\"author\": \"\"}")
+                .when().post("/resources/search")
+                .then()
+                .statusCode(200)
+                .extract()
+                .response();
+
+        ArchivedResources result = response.as(ArchivedResources.class);
+        assertTrue(result.getResources().isEmpty());
+    }
+
+
+    @Test
+    void searchArchivedResources_WhenCalledWithAuthorAndNonMatchingApprover_ThenReturnsEmptyList() {
+        IArchivedResourcesMetaItem emptyResult = new ArchivedResourcesMetaItem(List.of());
+
+        when(compasSclDataService.searchArchivedResources(null, null, "John", "NonExistentApprover", null, null, null, null, null))
+                .thenReturn(emptyResult);
+
+        Response response = given()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("{\"author\": \"John\", \"approver\": \"NonExistentApprover\"}")
+                .when().post("/resources/search")
+                .then()
+                .statusCode(200)
+                .extract()
+                .response();
+
+        ArchivedResources result = response.as(ArchivedResources.class);
+        assertTrue(result.getResources().isEmpty());
+    }
+
+    @Test
+    void searchArchivedResources_WhenCalledWithAuthorAndNonMatchingLocation_ThenReturnsEmptyList() {
+        String locationId = "someLocationId";
+        IArchivedResourcesMetaItem emptyResult = new ArchivedResourcesMetaItem(List.of());
+
+        when(compasSclDataService.searchArchivedResources(locationId, null, "John", null, null, null, null, null, null))
+                .thenReturn(emptyResult);
+
+        Response response = given()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("{\"author\": \"John\", \"location\": \"" + locationId + "\"}")
+                .when().post("/resources/search")
+                .then()
+                .statusCode(200)
+                .extract()
+                .response();
+
+        ArchivedResources result = response.as(ArchivedResources.class);
+        assertTrue(result.getResources().isEmpty());
+    }
+
+    @Test
+    void searchArchivedResources_WhenCalledWithUuidAndAuthor_ThenAuthorIsIgnoredAndUuidTakesPrecedence() {
+        UUID uuid = UUID.randomUUID();
+        String name = "Name";
+        String version = "1.0.0";
+        IAbstractArchivedResourceMetaItem testData = new ArchivedSclResourceTestDataBuilder()
+                .setId(uuid.toString()).setName(name).setVersion(version).setAuthor("John Doe").build();
+        IArchivedResourcesMetaItem archivedResources = new ArchivedResourcesMetaItem(List.of(testData));
+
+        when(compasSclDataService.searchArchivedResources(uuid)).thenReturn(archivedResources);
+
+        Response response = given()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("{\"uuid\": \"" + uuid + "\", \"author\": \"John Doe\"}")
+                .when().post("/resources/search")
+                .then()
+                .statusCode(200)
+                .extract()
+                .response();
+
+        ArchivedResources result = response.as(ArchivedResources.class);
+        assertEquals(1, result.getResources().size());
+        assertEquals(uuid, UUID.fromString(result.getResources().get(0).getUuid()));
+        verify(compasSclDataService, never()).searchArchivedResources(
+                any(), any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void searchArchivedResources_WhenCalledWithInvalidUuidFormat_ThenReturns500() {
+        given()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("{\"uuid\": \"not-a-uuid\"}")
+                .when().post("/resources/search")
+                .then()
+                .statusCode(500);
+    }
+
+    @Test
+    void searchArchivedResources_WhenCalledWithSingleQuoteInAuthor_ThenHandledSafely() {
+        String author = "O'Brien";
+        UUID uuid = UUID.randomUUID();
+        IAbstractArchivedResourceMetaItem testData = new ArchivedSclResourceTestDataBuilder()
+                .setId(uuid.toString()).setAuthor(author).build();
+        IArchivedResourcesMetaItem archivedResources = new ArchivedResourcesMetaItem(List.of(testData));
+
+        when(compasSclDataService.searchArchivedResources(null, null, author, null, null, null, null, null, null))
+                .thenReturn(archivedResources);
+
+        Response response = given()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("{\"author\": \"O'Brien\"}")
+                .when().post("/resources/search")
+                .then()
+                .statusCode(200)
+                .extract()
+                .response();
+
+        ArchivedResources result = response.as(ArchivedResources.class);
+        assertEquals(1, result.getResources().size());
+        assertEquals(author, result.getResources().get(0).getAuthor());
+    }
+
+    @Test
+    void searchArchivedResources_WhenCalledWithSqlInjectionInAuthor_ThenHandledSafely() {
+        String injectionAttempt = "'; DROP TABLE archived_resource; --";
+        IArchivedResourcesMetaItem emptyResult = new ArchivedResourcesMetaItem(List.of());
+
+        when(compasSclDataService.searchArchivedResources(null, null, injectionAttempt, null, null, null, null, null, null))
+                .thenReturn(emptyResult);
+
+        Response response = given()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("{\"author\": \"'; DROP TABLE archived_resource; --\"}")
+                .when().post("/resources/search")
+                .then()
+                .statusCode(200)
+                .extract()
+                .response();
+
+        ArchivedResources result = response.as(ArchivedResources.class);
+        assertTrue(result.getResources().isEmpty());
+    }
 
     @Test
     void retrieveArchivedResourceHistory_WhenCalledWithUuid_ThenReturnsMatchingArchivedResources() {

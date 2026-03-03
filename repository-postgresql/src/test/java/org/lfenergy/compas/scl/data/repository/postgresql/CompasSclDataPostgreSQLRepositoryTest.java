@@ -16,6 +16,7 @@ import org.lfenergy.compas.scl.extensions.model.SclFileType;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.sql.SQLException;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -192,6 +193,41 @@ class CompasSclDataPostgreSQLRepositoryTest extends AbstractCompasSclDataReposit
     }
 
     @Test
+    void listHistory_WhenSearchingByNonExistingLocationId_ShouldReturnEmptyList() throws SQLException {
+        // Given
+        UUID locationId = createLocation("LOC1", "Test Location 1", "Description");
+        UUID nonExistingLocationId = UUID.randomUUID();
+
+        String sclData = """
+            <SCL xmlns="http://www.iec.ch/61850/2003/SCL">
+                <Header id="header">
+                    <Hitem version="1.0.0" what="Initial version"/>
+                </Header>
+            </SCL>
+        """;
+
+        createSclFileWithLocation(UUID.randomUUID(), "File1", sclData, "John Doe", locationId);
+        createSclFileWithLocation(UUID.randomUUID(), "File2", sclData, "Max Doe", locationId);
+        createSclFileWithLocation(UUID.randomUUID(), "File3", sclData, "Max Smith", locationId);
+
+        // When
+        List<IHistoryMetaItem> result = repository.listHistory(
+                SclFileType.SCD,
+                null,
+                null,
+                nonExistingLocationId.toString(),
+                null,
+                null
+        );
+
+        // Then
+        assertAll(
+                () -> assertNotNull(result),
+                () -> assertEquals(0, result.size())
+        );
+    }
+
+    @Test
     void searchArchivedResource_WhenSearchingByAuthorOnly_ShouldReturnMatchingItems() throws SQLException {
         // Given
         UUID locationId = createLocation("LOC1", "Test Location", "Description");
@@ -210,8 +246,8 @@ class CompasSclDataPostgreSQLRepositoryTest extends AbstractCompasSclDataReposit
         createSclFileWithLocation(id2, "File2", sclData, "Jane Smith", locationId);
 
         Version version = new Version(1, 0, 0);
-        UUID archivedId1 = archiveSclFile(id1, locationId, version, "Approver1", "John Doe");
-        UUID archivedId2 = archiveSclFile(id2, locationId, version, "Approver2", "Jane Smith");
+        archiveSclFile(id1, locationId, version, "Approver1", "John Doe");
+        archiveSclFile(id2, locationId, version, "Approver2", "Jane Smith");
 
         // When
         IArchivedResourcesMetaItem result = repository.searchArchivedResource(
@@ -316,6 +352,262 @@ class CompasSclDataPostgreSQLRepositoryTest extends AbstractCompasSclDataReposit
         assertAll(
                 () -> assertNotNull(result),
                 () -> assertTrue(result.getResources().isEmpty())
+        );
+    }
+
+    @Test
+    void searchArchivedResource_WhenAuthorDoesNotMatchAnyResource_ShouldReturnEmptyList() throws SQLException {
+        // Given
+        UUID locationId = createLocation("LOC1", "Test Location", "Description");
+        UUID id1 = UUID.randomUUID();
+
+        String sclData = """
+            <SCL xmlns="http://www.iec.ch/61850/2003/SCL">
+                <Header id="header">
+                    <Hitem version="1.0.0" what="Initial version"/>
+                </Header>
+            </SCL>
+        """;
+
+        createSclFileWithLocation(id1, "File1", sclData, "Jane Smith", locationId);
+        archiveSclFile(id1, locationId, new Version(1, 0, 0), "Approver1", "Jane Smith");
+
+        // When
+        IArchivedResourcesMetaItem result = repository.searchArchivedResource(
+                null, null, "NonExistingAuthor", null, null, null, null, null, null
+        );
+
+        // Then
+        assertAll(
+                () -> assertNotNull(result),
+                () -> assertTrue(result.getResources().isEmpty())
+        );
+    }
+
+    @Test
+    void searchArchivedResource_WhenAuthorMatchesButLocationDoesNot_ShouldReturnEmptyList() throws SQLException {
+        // Given
+        UUID locationId1 = createLocation("LOC1", "Test Location 1", "Description");
+        UUID locationId2 = createLocation("LOC2", "Test Location 2", "Description");
+        UUID id1 = UUID.randomUUID();
+
+        String sclData = """
+            <SCL xmlns="http://www.iec.ch/61850/2003/SCL">
+                <Header id="header">
+                    <Hitem version="1.0.0" what="Initial version"/>
+                </Header>
+            </SCL>
+        """;
+
+        createSclFileWithLocation(id1, "File1", sclData, "John Doe", locationId1);
+        archiveSclFile(id1, locationId1, new Version(1, 0, 0), "Approver1", "John Doe");
+
+        // When - author matches a resource in locationId1, but search is restricted to locationId2
+        IArchivedResourcesMetaItem result = repository.searchArchivedResource(
+                locationId2.toString(), null, "John", null, null, null, null, null, null
+        );
+
+        // Then
+        assertAll(
+                () -> assertNotNull(result),
+                () -> assertTrue(result.getResources().isEmpty())
+        );
+    }
+
+    @Test
+    void searchArchivedResource_WhenAuthorMatchesButApproverDoesNot_ShouldReturnEmptyList() throws SQLException {
+        // Given
+        UUID locationId = createLocation("LOC1", "Test Location", "Description");
+        UUID id1 = UUID.randomUUID();
+
+        String sclData = """
+            <SCL xmlns="http://www.iec.ch/61850/2003/SCL">
+                <Header id="header">
+                    <Hitem version="1.0.0" what="Initial version"/>
+                </Header>
+            </SCL>
+        """;
+
+        createSclFileWithLocation(id1, "File1", sclData, "John Doe", locationId);
+        archiveSclFile(id1, locationId, new Version(1, 0, 0), "Admin User", "John Doe");
+
+        // When - author matches but approver does not
+        IArchivedResourcesMetaItem result = repository.searchArchivedResource(
+                null, null, "John", "NonExistingApprover", null, null, null, null, null
+        );
+
+        // Then
+        assertAll(
+                () -> assertNotNull(result),
+                () -> assertTrue(result.getResources().isEmpty())
+        );
+    }
+
+    @Test
+    void searchArchivedResource_WhenAuthorMatchesButFromDateIsInTheFuture_ShouldReturnEmptyList() throws SQLException {
+        // Given
+        UUID locationId = createLocation("LOC1", "Test Location", "Description");
+        UUID id1 = UUID.randomUUID();
+
+        String sclData = """
+            <SCL xmlns="http://www.iec.ch/61850/2003/SCL">
+                <Header id="header">
+                    <Hitem version="1.0.0" what="Initial version"/>
+                </Header>
+            </SCL>
+        """;
+
+        createSclFileWithLocation(id1, "File1", sclData, "John Doe", locationId);
+        archiveSclFile(id1, locationId, new Version(1, 0, 0), "Approver1", "John Doe");
+
+        OffsetDateTime futureDate = OffsetDateTime.now().plusDays(1);
+
+        // When - author matches but archived_at is before the 'from' date
+        IArchivedResourcesMetaItem result = repository.searchArchivedResource(
+                null, null, "John", null, null, null, null, futureDate, null
+        );
+
+        // Then
+        assertAll(
+                () -> assertNotNull(result),
+                () -> assertTrue(result.getResources().isEmpty())
+        );
+    }
+
+    @Test
+    void listHistory_WhenAuthorMatchesButLocationDoesNot_ShouldReturnEmptyList() throws SQLException {
+        // Given
+        UUID locationId1 = createLocation("LOC1", "Test Location 1", "Description");
+        UUID locationId2 = createLocation("LOC2", "Test Location 2", "Description");
+        UUID id1 = UUID.randomUUID();
+
+        String sclData = """
+            <SCL xmlns="http://www.iec.ch/61850/2003/SCL">
+                <Header id="header">
+                    <Hitem version="1.0.0" what="Initial version"/>
+                </Header>
+            </SCL>
+        """;
+
+        createSclFileWithLocation(id1, "File1", sclData, "John Doe", locationId1);
+
+        // When - author exists in locationId1 but search is restricted to locationId2
+        List<IHistoryMetaItem> result = repository.listHistory(
+                SclFileType.SCD,
+                null,
+                "John",
+                locationId2.toString(),
+                null,
+                null
+        );
+
+        // Then
+        assertAll(
+                () -> assertNotNull(result),
+                () -> assertTrue(result.isEmpty())
+        );
+    }
+
+    @Test
+    void listHistory_WhenAuthorMatchesButFromDateIsInTheFuture_ShouldReturnEmptyList() throws SQLException {
+        // Given
+        UUID id1 = UUID.randomUUID();
+
+        String sclData = """
+            <SCL xmlns="http://www.iec.ch/61850/2003/SCL">
+                <Header id="header">
+                    <Hitem version="1.0.0" what="Initial version"/>
+                </Header>
+            </SCL>
+        """;
+
+        createSclFile(id1, "File1", sclData, "John Doe");
+
+        OffsetDateTime futureDate = OffsetDateTime.now().plusDays(1);
+
+        // When - author matches but creation_date is before the 'from' date
+        List<IHistoryMetaItem> result = repository.listHistory(
+                SclFileType.SCD,
+                null,
+                "John",
+                null,
+                futureDate,
+                null
+        );
+
+        // Then
+        assertAll(
+                () -> assertNotNull(result),
+                () -> assertTrue(result.isEmpty())
+        );
+    }
+
+    @Test
+    void listHistory_WhenAuthorIsWhitespaceOnly_ShouldReturnEmptyList() throws SQLException {
+        // Given
+        UUID id1 = UUID.randomUUID();
+        UUID id2 = UUID.randomUUID();
+
+        String sclData = """
+            <SCL xmlns="http://www.iec.ch/61850/2003/SCL">
+                <Header id="header">
+                    <Hitem version="1.0.0" what="Initial version"/>
+                </Header>
+            </SCL>
+        """;
+
+        createSclFile(id1, "File1", sclData, "John Doe");
+        createSclFile(id2, "File2", sclData, "Jane Smith");
+
+        // When - whitespace-only author is not blank-checked in listHistory, so it queries
+        // created_by ILIKE '%   %', which won't match any of the inserted authors
+        List<IHistoryMetaItem> result = repository.listHistory(
+                SclFileType.SCD,
+                null,
+                "   ",
+                null,
+                null,
+                null
+        );
+
+        // Then
+        assertAll(
+                () -> assertNotNull(result),
+                () -> assertTrue(result.isEmpty())
+        );
+    }
+
+    @Test
+    void listHistory_WhenAuthorIsLowercase_ShouldReturnMatchingResult() throws SQLException {
+        // Given
+        UUID id1 = UUID.randomUUID();
+        UUID id2 = UUID.randomUUID();
+
+        String sclData = """
+            <SCL xmlns="http://www.iec.ch/61850/2003/SCL">
+                <Header id="header">
+                    <Hitem version="1.0.0" what="Initial version"/>
+                </Header>
+            </SCL>
+        """;
+
+        createSclFile(id1, "File1", sclData, "John Doe");
+        createSclFile(id2, "File2", sclData, "Jane Smith");
+
+        // When
+        List<IHistoryMetaItem> result = repository.listHistory(
+                SclFileType.SCD,
+                null,
+                "john",
+                null,
+                null,
+                null
+        );
+
+        // Then
+        assertAll(
+                () -> assertNotNull(result),
+                () -> assertEquals(1, result.size())
         );
     }
 
