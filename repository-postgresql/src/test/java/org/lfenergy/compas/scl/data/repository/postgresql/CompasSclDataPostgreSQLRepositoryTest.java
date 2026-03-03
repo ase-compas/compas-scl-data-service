@@ -48,6 +48,7 @@ class CompasSclDataPostgreSQLRepositoryTest extends AbstractCompasSclDataReposit
             stmt.execute("TRUNCATE TABLE scl_file CASCADE");
             stmt.execute("TRUNCATE TABLE location_resource_tag CASCADE");
             stmt.execute("TRUNCATE TABLE location CASCADE");
+            stmt.execute("TRUNCATE TABLE referenced_resource CASCADE");
             stmt.execute("TRUNCATE TABLE archived_resource CASCADE");
             stmt.execute("TRUNCATE TABLE archived_resource_resource_tag CASCADE");
             stmt.execute("TRUNCATE TABLE resource_tag CASCADE");
@@ -188,7 +189,7 @@ class CompasSclDataPostgreSQLRepositoryTest extends AbstractCompasSclDataReposit
                 () -> assertNotNull(result),
                 () -> assertEquals(2, result.size()),
                 () -> assertTrue(result.stream()
-                        .anyMatch(r -> r.getLocation().equals(locationId2.toString())))
+                        .allMatch(r -> r.getLocation().equals(locationId2.toString())))
         );
     }
 
@@ -258,8 +259,7 @@ class CompasSclDataPostgreSQLRepositoryTest extends AbstractCompasSclDataReposit
         assertAll(
                 () -> assertNotNull(result),
                 () -> assertEquals(1, result.getResources().size()),
-                () -> assertTrue(result.getResources().stream()
-                        .anyMatch(r -> r.getAuthor().equals("John Doe")))
+                () -> assertEquals("John Doe", result.getResources().get(0).getAuthor())
         );
     }
 
@@ -294,8 +294,7 @@ class CompasSclDataPostgreSQLRepositoryTest extends AbstractCompasSclDataReposit
         assertAll(
                 () -> assertNotNull(result),
                 () -> assertEquals(1, result.getResources().size()),
-                () -> assertTrue(result.getResources().stream()
-                        .anyMatch(r -> r.getApprover().equals("Admin User")))
+                () -> assertEquals("Admin User", result.getResources().get(0).getApprover())
         );
     }
 
@@ -334,9 +333,11 @@ class CompasSclDataPostgreSQLRepositoryTest extends AbstractCompasSclDataReposit
                 () -> assertNotNull(result),
                 () -> assertEquals(2, result.getResources().size()),
                 () -> assertTrue(result.getResources().stream()
-                    .anyMatch(r -> r.getAuthor().equals("John Smith") || r.getAuthor().equals("John Doe"))),
+                        .anyMatch(r -> r.getAuthor().equals("John Doe"))),
                 () -> assertTrue(result.getResources().stream()
-                    .anyMatch(r -> r.getApprover().equals("Admin User")))
+                        .anyMatch(r -> r.getAuthor().equals("John Smith"))),
+                () -> assertTrue(result.getResources().stream()
+                    .allMatch(r -> r.getApprover().equals("Admin User")))
         );
     }
 
@@ -543,7 +544,7 @@ class CompasSclDataPostgreSQLRepositoryTest extends AbstractCompasSclDataReposit
     }
 
     @Test
-    void listHistory_WhenAuthorIsWhitespaceOnly_ShouldReturnEmptyList() throws SQLException {
+    void listHistory_WhenAuthorIsBlank_ShouldIgnoreAuthorFilterAndReturnAllItems() throws SQLException {
         // Given
         UUID id1 = UUID.randomUUID();
         UUID id2 = UUID.randomUUID();
@@ -559,12 +560,11 @@ class CompasSclDataPostgreSQLRepositoryTest extends AbstractCompasSclDataReposit
         createSclFile(id1, "File1", sclData, "John Doe");
         createSclFile(id2, "File2", sclData, "Jane Smith");
 
-        // When - whitespace-only author is not blank-checked in listHistory, so it queries
-        // created_by ILIKE '%   %', which won't match any of the inserted authors
+        // When - blank author is treated as no filter, so all records are returned
         List<IHistoryMetaItem> result = repository.listHistory(
                 SclFileType.SCD,
                 null,
-                "   ",
+                " ",
                 null,
                 null,
                 null
@@ -573,7 +573,7 @@ class CompasSclDataPostgreSQLRepositoryTest extends AbstractCompasSclDataReposit
         // Then
         assertAll(
                 () -> assertNotNull(result),
-                () -> assertTrue(result.isEmpty())
+                () -> assertEquals(2, result.size())
         );
     }
 
@@ -611,6 +611,287 @@ class CompasSclDataPostgreSQLRepositoryTest extends AbstractCompasSclDataReposit
         );
     }
 
+    @Test
+    void listHistory_WhenSearchingByType_ShouldReturnOnlyMatchingTypeItems() throws SQLException {
+        // Given
+        UUID id1 = UUID.randomUUID();
+        UUID id2 = UUID.randomUUID();
+
+        String sclData = """
+            <SCL xmlns="http://www.iec.ch/61850/2003/SCL">
+                <Header id="header">
+                    <Hitem version="1.0.0" what="Initial version"/>
+                </Header>
+            </SCL>
+        """;
+
+        createSclFileWithType(id1, "ScdFile", sclData, "Author1", SclFileType.SCD);
+        createSclFileWithType(id2, "SsdFile", sclData, "Author2", SclFileType.SSD);
+
+        // When
+        List<IHistoryMetaItem> result = repository.listHistory(
+                SclFileType.SCD,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        // Then
+        assertAll(
+                () -> assertNotNull(result),
+                () -> assertEquals(1, result.size()),
+                () -> assertEquals(id1.toString(), result.get(0).getId()),
+                () -> assertEquals(SclFileType.SCD.toString(), result.get(0).getType())
+        );
+    }
+
+    @Test
+    void listHistory_WhenSearchingByTypeThatHasNoFiles_ShouldReturnEmptyList() throws SQLException {
+        // Given - only SCD files exist
+        UUID id1 = UUID.randomUUID();
+
+        String sclData = """
+            <SCL xmlns="http://www.iec.ch/61850/2003/SCL">
+                <Header id="header">
+                    <Hitem version="1.0.0" what="Initial version"/>
+                </Header>
+            </SCL>
+        """;
+
+        createSclFile(id1, "File1", sclData, "Author1");
+
+        // When - searching for SSD but only SCD exists
+        List<IHistoryMetaItem> result = repository.listHistory(
+                SclFileType.SSD,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        // Then
+        assertAll(
+                () -> assertNotNull(result),
+                () -> assertTrue(result.isEmpty())
+        );
+    }
+
+    @Test
+    void listHistory_WhenFromDateIsInThePast_ShouldReturnMatchingItems() throws SQLException {
+        // Given
+        UUID id1 = UUID.randomUUID();
+
+        String sclData = """
+            <SCL xmlns="http://www.iec.ch/61850/2003/SCL">
+                <Header id="header">
+                    <Hitem version="1.0.0" what="Initial version"/>
+                </Header>
+            </SCL>
+        """;
+
+        createSclFile(id1, "File1", sclData, "John Doe");
+
+        OffsetDateTime pastDate = OffsetDateTime.now().minusDays(1);
+
+        // When - file was created after the 'from' date
+        List<IHistoryMetaItem> result = repository.listHistory(
+                SclFileType.SCD,
+                null,
+                null,
+                null,
+                pastDate,
+                null
+        );
+
+        // Then
+        assertAll(
+                () -> assertNotNull(result),
+                () -> assertEquals(1, result.size()),
+                () -> assertEquals(id1.toString(), result.get(0).getId())
+        );
+    }
+
+    @Test
+    void listHistory_WhenToDateIsInTheFuture_ShouldReturnMatchingItems() throws SQLException {
+        // Given
+        UUID id1 = UUID.randomUUID();
+
+        String sclData = """
+            <SCL xmlns="http://www.iec.ch/61850/2003/SCL">
+                <Header id="header">
+                    <Hitem version="1.0.0" what="Initial version"/>
+                </Header>
+            </SCL>
+        """;
+
+        createSclFile(id1, "File1", sclData, "John Doe");
+
+        OffsetDateTime futureDate = OffsetDateTime.now().plusDays(1);
+
+        // When - file was created before the 'to' date
+        List<IHistoryMetaItem> result = repository.listHistory(
+                SclFileType.SCD,
+                null,
+                null,
+                null,
+                null,
+                futureDate
+        );
+
+        // Then
+        assertAll(
+                () -> assertNotNull(result),
+                () -> assertEquals(1, result.size()),
+                () -> assertEquals(id1.toString(), result.get(0).getId())
+        );
+    }
+
+    @Test
+    void listHistory_WhenToDateIsInThePast_ShouldReturnEmptyList() throws SQLException {
+        // Given
+        UUID id1 = UUID.randomUUID();
+
+        String sclData = """
+            <SCL xmlns="http://www.iec.ch/61850/2003/SCL">
+                <Header id="header">
+                    <Hitem version="1.0.0" what="Initial version"/>
+                </Header>
+            </SCL>
+        """;
+
+        createSclFile(id1, "File1", sclData, "John Doe");
+
+        OffsetDateTime pastDate = OffsetDateTime.now().minusDays(1);
+
+        // When - file was created after the 'to' date
+        List<IHistoryMetaItem> result = repository.listHistory(
+                SclFileType.SCD,
+                null,
+                null,
+                null,
+                null,
+                pastDate
+        );
+
+        // Then
+        assertAll(
+                () -> assertNotNull(result),
+                () -> assertTrue(result.isEmpty())
+        );
+    }
+
+    @Test
+    void listHistory_WhenCreationDateIsWithinFromToRange_ShouldReturnMatchingItems() throws SQLException {
+        // Given
+        UUID id1 = UUID.randomUUID();
+        UUID id2 = UUID.randomUUID();
+
+        String sclData = """
+            <SCL xmlns="http://www.iec.ch/61850/2003/SCL">
+                <Header id="header">
+                    <Hitem version="1.0.0" what="Initial version"/>
+                </Header>
+            </SCL>
+        """;
+
+        createSclFile(id1, "File1", sclData, "John Doe");
+        createSclFile(id2, "File2", sclData, "Jane Smith");
+
+        OffsetDateTime from = OffsetDateTime.now().minusDays(1);
+        OffsetDateTime to = OffsetDateTime.now().plusDays(1);
+
+        // When - both files were created within the from-to range
+        List<IHistoryMetaItem> result = repository.listHistory(
+                SclFileType.SCD,
+                null,
+                null,
+                null,
+                from,
+                to
+        );
+
+        // Then
+        assertAll(
+                () -> assertNotNull(result),
+                () -> assertEquals(2, result.size())
+        );
+    }
+
+    @Test
+    void listHistory_WhenCreationDateIsOutsideFromToRange_ShouldReturnEmptyList() throws SQLException {
+        // Given
+        UUID id1 = UUID.randomUUID();
+
+        String sclData = """
+            <SCL xmlns="http://www.iec.ch/61850/2003/SCL">
+                <Header id="header">
+                    <Hitem version="1.0.0" what="Initial version"/>
+                </Header>
+            </SCL>
+        """;
+
+        createSclFile(id1, "File1", sclData, "John Doe");
+
+        // Range is entirely in the past (before the file was created)
+        OffsetDateTime from = OffsetDateTime.now().minusDays(5);
+        OffsetDateTime to = OffsetDateTime.now().minusDays(1);
+
+        // When - file creation date falls outside the from-to range
+        List<IHistoryMetaItem> result = repository.listHistory(
+                SclFileType.SCD,
+                null,
+                null,
+                null,
+                from,
+                to
+        );
+
+        // Then
+        assertAll(
+                () -> assertNotNull(result),
+                () -> assertTrue(result.isEmpty())
+        );
+    }
+
+    @Test
+    void listHistory_WhenFromDateIsAfterToDate_ShouldReturnEmptyList() throws SQLException {
+        // Given
+        UUID id1 = UUID.randomUUID();
+
+        String sclData = """
+            <SCL xmlns="http://www.iec.ch/61850/2003/SCL">
+                <Header id="header">
+                    <Hitem version="1.0.0" what="Initial version"/>
+                </Header>
+            </SCL>
+        """;
+
+        createSclFile(id1, "File1", sclData, "John Doe");
+
+        // Invalid range: from is after to
+        OffsetDateTime from = OffsetDateTime.now().plusDays(1);
+        OffsetDateTime to = OffsetDateTime.now().minusDays(1);
+
+        // When - no record can satisfy creation_date >= from AND creation_date <= to when from > to
+        List<IHistoryMetaItem> result = repository.listHistory(
+                SclFileType.SCD,
+                null,
+                null,
+                null,
+                from,
+                to
+        );
+
+        // Then
+        assertAll(
+                () -> assertNotNull(result),
+                () -> assertTrue(result.isEmpty())
+        );
+    }
+
     private UUID createLocation(String key, String name, String description) throws SQLException {
         UUID locationId = UUID.randomUUID();
         String sql = "INSERT INTO location (id, key, name, description) VALUES (?, ?, ?, ?)";
@@ -644,17 +925,22 @@ class CompasSclDataPostgreSQLRepositoryTest extends AbstractCompasSclDataReposit
     }
 
     private void createSclFile(UUID id, String name, String sclData, String author) throws SQLException {
+        createSclFileWithType(id, name, sclData, author, SclFileType.SCD);
+    }
+
+    private void createSclFileWithType(UUID id, String name, String sclData, String author, SclFileType type) throws SQLException {
         String sql = """
                 INSERT INTO scl_file(id, major_version, minor_version, patch_version, type, name, created_by, scl_data, is_deleted)
-                VALUES (?, 1, 0, 0, 'SCD', ?, ?, ?, false)
+                VALUES (?, 1, 0, 0, ?, ?, ?, ?, false)
         """;
 
         try (var connection = PostgreSQLServerJUnitExtension.getDataSource().getConnection();
              var stmt = connection.prepareStatement(sql)) {
             stmt.setObject(1, id);
-            stmt.setString(2, name);
-            stmt.setString(3, author);
-            stmt.setString(4, sclData);
+            stmt.setString(2, type.toString());
+            stmt.setString(3, name);
+            stmt.setString(4, author);
+            stmt.setString(5, sclData);
             stmt.executeUpdate();
         }
     }

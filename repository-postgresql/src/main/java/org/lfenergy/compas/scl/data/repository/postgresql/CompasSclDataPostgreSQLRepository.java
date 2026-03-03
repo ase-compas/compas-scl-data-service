@@ -595,7 +595,7 @@ public class CompasSclDataPostgreSQLRepository implements CompasSclDataRepositor
             parameters.add("%" + name + "%");
         }
 
-        if (author != null) {
+        if (author != null && !author.isBlank()) {
             sqlBuilder.append(" AND subquery.created_by ILIKE ? ");
             parameters.add("%" + author + "%");
         }
