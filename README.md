@@ -52,7 +52,7 @@ environment variables that can be set in the container to configure the validati
 
 The application uses the following list of roles. The fine-grained roles are built up of the types of SCL Files this
 service supports and the rights READ/CREATE/UPDATE/DElETE. This way the mapping of the roles to groups/users can be
-configured as needed.
+configured as needed. 
 
 - ICD_CREATE
 - ICD_DELETE
