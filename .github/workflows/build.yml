@@ -9,9 +9,9 @@ on:
       - 'transnet/develop'
 
 # TODO: Sync with David
-#  pull_request:
-#   branches:
-#      - 'transnet/develop'
+  pull_request:
+   branches:
+      - 'transnet/develop'
 
 jobs:
   build:
