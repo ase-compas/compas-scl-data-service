@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2024 BearingPoint GmbH
+//
+// SPDX-License-Identifier: Apache-2.0
 package org.lfenergy.compas.scl.data.rest.api.locations.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;

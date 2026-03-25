@@ -1,3 +1,8 @@
+/**
+ * SPDX-FileCopyrightText: 2024 BearingPoint GmbH
+ *
+ * SPDX-License-Identifier: Apache-2.0
+*/
 --
 -- Creating table to hold Resource Tag Data. The Resource Tag is identified by its ID.
 --

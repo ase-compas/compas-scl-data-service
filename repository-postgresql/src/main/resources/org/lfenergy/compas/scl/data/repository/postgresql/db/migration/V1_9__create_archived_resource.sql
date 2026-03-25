@@ -1,3 +1,8 @@
+/**
+ * SPDX-FileCopyrightText: 2024 BearingPoint GmbH
+ *
+ * SPDX-License-Identifier: Apache-2.0
+*/
 --
 -- Creating table to hold Archived Resource Data. An Archived Resource is identified by its ID.
 --

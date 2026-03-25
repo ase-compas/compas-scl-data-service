@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2025 BearingPoint GmbH
+//
+// SPDX-License-Identifier: Apache-2.0
 package org.lfenergy.compas.scl.data.rest.api.scl;
 
 import io.quarkus.test.InjectMock;
@@ -118,5 +121,60 @@ class HistoryResourceTest {
         assertNotNull(responseData);
         String expectedContent = "hello world";
         assertArrayEquals(expectedContent.getBytes(), responseData);
+    }
+
+    @Test
+    void searchForResources_WhenCalledWithAuthorFilterAndNoMatchFound_ThenReturnsEmptyResults() {
+        when(compasSclDataService.listHistory(null, null, "NonExistentAuthor", null, null, null))
+                .thenReturn(List.of());
+
+        var response = given()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("{\"author\": \"NonExistentAuthor\"}")
+                .when().post("/search")
+                .then()
+                .statusCode(200)
+                .extract()
+                .response();
+
+        var dataResourcesResult = response.as(DataResourcesResult.class);
+        assertNotNull(dataResourcesResult);
+        assertTrue(dataResourcesResult.getResults().isEmpty());
+    }
+
+    @Test
+    void searchForResources_WhenCalledWithAuthorAndLocationFilterAndNoMatchFound_ThenReturnsEmptyResults() {
+        when(compasSclDataService.listHistory(null, null, "John", "someLocation", null, null))
+                .thenReturn(List.of());
+
+        var response = given()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("{\"author\": \"John\", \"location\": \"someLocation\"}")
+                .when().post("/search")
+                .then()
+                .statusCode(200)
+                .extract()
+                .response();
+
+        var dataResourcesResult = response.as(DataResourcesResult.class);
+        assertNotNull(dataResourcesResult);
+        assertTrue(dataResourcesResult.getResults().isEmpty());
+    }
+
+    @Test
+    void searchForResources_WhenCalledWithInvalidType_ThenReturnsEmptyResult() {
+        var response = given()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("{\"type\": \"INVALID_TYPE\"}")
+                .when().post("/search")
+                .then()
+                .statusCode(200)
+                .extract()
+                .response();
+
+        var dataResourcesResult = response.as(DataResourcesResult.class);
+        assertNotNull(dataResourcesResult);
+        assertTrue(dataResourcesResult.getResults() == null || dataResourcesResult.getResults().isEmpty());
+        verify(compasSclDataService, never()).listHistory(any(), any(), any(), any(), any(), any());
     }
 }

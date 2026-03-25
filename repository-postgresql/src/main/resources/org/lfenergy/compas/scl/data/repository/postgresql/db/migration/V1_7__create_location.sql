@@ -1,3 +1,8 @@
+/**
+ * SPDX-FileCopyrightText: 2025 BearingPoint GmbH
+ *
+ * SPDX-License-Identifier: Apache-2.0
+*/
 --
 -- Creating table to hold Location Data. The Location is identified by its ID.
 --

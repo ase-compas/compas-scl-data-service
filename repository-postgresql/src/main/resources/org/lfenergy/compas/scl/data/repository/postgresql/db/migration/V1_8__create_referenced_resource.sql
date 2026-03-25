@@ -1,3 +1,8 @@
+/**
+ * SPDX-FileCopyrightText: 2024 BearingPoint GmbH
+ *
+ * SPDX-License-Identifier: Apache-2.0
+*/
 --
 -- Create table to hold Referenced Resource Data. A Referenced Resource is identified by its ID.
 --

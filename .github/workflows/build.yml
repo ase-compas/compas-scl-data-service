@@ -1,11 +1,16 @@
+# SPDX-FileCopyrightText: 2025 BearingPoint GmbH
+#
+# SPDX-License-Identifier: Apache-2.0
 name: Publish Temp Docker Image
 
 on:
   push:
     branches:
       - 'transnet/develop'
+
+# TODO: Sync with David
   pull_request:
-    branches:
+   branches:
       - 'transnet/develop'
 
 jobs:

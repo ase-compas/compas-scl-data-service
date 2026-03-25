@@ -1,3 +1,8 @@
+/**
+ * SPDX-FileCopyrightText: 2024 BearingPoint GmbH
+ *
+ * SPDX-License-Identifier: Apache-2.0
+*/
 --
 -- Add 'location_id' column to the scl_file table.
 --
