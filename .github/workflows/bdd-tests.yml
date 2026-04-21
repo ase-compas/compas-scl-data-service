@@ -1,0 +1,69 @@
+name: BDD Service Tests
+
+on:
+  workflow_run:
+    workflows: ["Build Project"]
+    types:
+      - completed
+
+jobs:
+  test:
+    name: Run BDD Tests
+    runs-on: ubuntu-latest
+    # Only run if the Build Project workflow succeeded
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    
+    steps:
+      - name: Checkout Data Service
+        uses: actions/checkout@v4
+        with:
+          # We need to explicitly check out the commit that triggered the build
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: target-artifact
+          path: target/
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Data Service Docker Image
+        run: |
+          docker build -t ghcr.io/ase-compas/lfenergy/compas-scl-data-service:${{ github.event.workflow_run.head_sha }} -f src/main/docker/Dockerfile.jvm .
+
+      - name: Checkout Test Infrastructure
+        uses: actions/checkout@v4
+        with:
+          repository: ase-compas/compas-service-tests
+          path: test-infra
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Tests via Generic Framework
+        env:
+          SCL_DATA_SERVICE_VERSION: ${{ github.event.workflow_run.head_sha }}
+          EXTERNAL_TEST_DIR: ../service-tests/steps
+          EXTERNAL_FEATURES_DIR: ../service-tests/features
+        run: |
+          cd test-infra
+          mkdir -p reports
+          docker compose up --abort-on-container-exit --exit-code-from service-tests
+
+      - name: Upload Test Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bdd-cucumber-reports
+          path: test-infra/reports/
+
+      - name: Delete Build Artifacts
+        if: always()
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: target-artifact

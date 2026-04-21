@@ -47,3 +47,10 @@ jobs:
         run: |
           docker tag lfenergy/compas-scl-data-service:0.15.3-SNAPSHOT-postgresql ghcr.io/ase-compas/lfenergy/compas-scl-data-service:0.15.3-SNAPSHOT-postgresql
           docker push ghcr.io/ase-compas/lfenergy/compas-scl-data-service:0.15.3-SNAPSHOT-postgresql
+
+      - name: Upload target directory
+        uses: actions/upload-artifact@v4
+        with:
+          name: target-artifact
+          path: target/
+          retention-days: 1
