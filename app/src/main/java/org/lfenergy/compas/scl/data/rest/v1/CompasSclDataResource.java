@@ -28,7 +28,7 @@ import static org.lfenergy.compas.scl.data.rest.Constants.*;
 @Authenticated
 @RequestScoped
 @Path("/scl/v1/{" + TYPE_PATH_PARAM + "}")
-public class CompasSclDataResource {
+public class § {
     private static final Logger LOGGER = LogManager.getLogger(CompasSclDataResource.class);
 
     private final CompasSclDataService compasSclDataService;
