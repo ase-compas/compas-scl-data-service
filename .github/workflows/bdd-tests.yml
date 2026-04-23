@@ -34,13 +34,38 @@ jobs:
 
       - name: Build Data Service Docker Image
         run: |
-          docker build -t ghcr.io/ase-compas/lfenergy/compas-scl-data-service:${{ github.event.workflow_run.head_sha }} -f src/main/docker/Dockerfile.jvm .
+          docker build \
+            -t ghcr.io/ase-compas/lfenergy/compas-scl-data-service:${{ github.event.workflow_run.head_sha }} \
+            -f app/src/main/docker/Dockerfile.jvm \
+            .
 
-      - name: Checkout Test Infrastructure
-        uses: actions/checkout@v4
-        with:
-          repository: ase-compas/compas-service-tests
-          path: test-infra
+      - name: Run Mock Services
+        run: |
+          cd service-tests
+          docker-compose -f docker-compose-ci.yml up -d
+
+      - name: Run SCL Data Service
+        run: |
+            docker run -d --rm \
+              --name scl-data-service \
+              -p 8080:8080 \
+              -e POSTGRESQL_HOST=postgresql \
+              -e POSTGRESQL_DB=compas \
+              -e QUARKUS_DATASOURCE_JDBC_URL=jdbc:postgresql://localhost:5432/compas?currentSchema=scl_data \
+              -e QUARKUS_DATASOURCE_REACTIVE_URL=postgresql://localhost:5432/compas?currentSchema=scl_data \
+              -e QUARKUS_FLYWAY_SCHEMAS=scl_data \
+              -e QUARKUS_FLYWAY_BASELINE_ON_MIGRATE=true \
+              -e QUARKUS_DATASOURCE_USERNAME=postgres \
+              -e QUARKUS_DATASOURCE_PASSWORD=postgres \
+              -e JWT_VERIFY_KEY=http://localhost:8089/auth/realms/compas/protocol/openid-connect/certs \
+              -e JWT_VERIFY_ISSUER=http://localhost:8089/auth/realms/compas \
+              -e JWT_VERIFY_CLIENT_ID=scl-data-service \
+              -e JWT_GROUPS_PATH=resource_access/scl-data-service/roles \
+              -e USERINFO_NAME_CLAIMNAME=name \
+              -e USERINFO_WHO_CLAIMNAME=name \
+              -e USERINFO_SESSION_WARNING=20 \
+              -e USERINFO_SESSION_EXPIRES=30 \
+              ghcr.io/ase-compas/lfenergy/compas-scl-data-service:${{ github.event.workflow_run.head_sha }}
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -49,22 +74,24 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run Tests via Generic Framework
-        env:
-          SCL_DATA_SERVICE_VERSION: ${{ github.event.workflow_run.head_sha }}
-          EXTERNAL_TEST_DIR: ../service-tests/steps
-          EXTERNAL_FEATURES_DIR: ../service-tests/features
+      - name: Run Service Tests
         run: |
-          cd test-infra
-          mkdir -p reports
-          docker compose up --abort-on-container-exit --exit-code-from service-tests
+          mkdir -p test-reports
+          docker pull ghcr.io/ase-compas/compas-service-tests:latest
+          docker run --rm \
+            -e SCL_DATA_SERVICE_VERSION=${{ github.event.workflow_run.head_sha }} \
+            -e CUCUMBER_TAGS="@smoke and @scl-data-service" \
+            -v "${{ github.workspace }}/service-tests/steps:/custom-steps:ro" \
+            -v "${{ github.workspace }}/service-tests/features:/custom-features:ro" \
+            -v "${{ github.workspace }}/test-reports:/reports" \
+            ghcr.io/ase-compas/compas-service-tests:latest       
 
       - name: Upload Test Reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: bdd-cucumber-reports
-          path: test-infra/reports/
+          path: test-reports/
 
       - name: Delete Build Artifacts
         if: always()
